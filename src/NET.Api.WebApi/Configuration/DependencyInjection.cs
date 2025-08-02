@@ -1,8 +1,9 @@
-using NET.Api.Application.Mappings;
 using NET.Api.Infrastructure.Configuration;
 using FluentValidation;
 using MediatR;
 using System.Reflection;
+using NET.Api.Application.Common.Behaviors;
+using NET.Api.Application.Common.Mappings;
 
 namespace NET.Api.WebApi.Configuration;
 
@@ -40,17 +41,24 @@ public static class DependencyInjection
 
     private static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        // Add MediatR
+        // Get Application assembly reference
+        var applicationAssembly = typeof(MappingProfile).Assembly;
+        
+        // Add MediatR - Registers all handlers from Application assembly
         services.AddMediatR(cfg => 
         {
-            cfg.RegisterServicesFromAssembly(typeof(NET.Api.Application.Commands.ICommand).Assembly);
+            cfg.RegisterServicesFromAssembly(applicationAssembly);
         });
+
+        // Add MediatR Behaviors (order matters - they execute in registration order)
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
         // Add AutoMapper
         services.AddAutoMapper(typeof(MappingProfile));
 
-        // Add FluentValidation
-        services.AddValidatorsFromAssembly(typeof(NET.Api.Application.Commands.ICommand).Assembly);
+        // Add FluentValidation - Registers all validators from Application assembly
+        services.AddValidatorsFromAssembly(applicationAssembly);
 
         return services;
     }
