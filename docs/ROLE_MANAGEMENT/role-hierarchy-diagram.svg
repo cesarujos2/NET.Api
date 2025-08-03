@@ -1,0 +1,137 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; fill: #2c3e50; }
+      .role-box { fill: #3498db; stroke: #2980b9; stroke-width: 2; rx: 8; }
+      .role-text { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; fill: white; text-anchor: middle; }
+      .level-text { font-family: Arial, sans-serif; font-size: 12px; fill: white; text-anchor: middle; }
+      .arrow { stroke: #34495e; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .policy-box { fill: #e74c3c; stroke: #c0392b; stroke-width: 2; rx: 5; }
+      .policy-text { font-family: Arial, sans-serif; font-size: 11px; fill: white; text-anchor: middle; }
+      .legend-box { fill: #ecf0f1; stroke: #bdc3c7; stroke-width: 1; rx: 5; }
+      .legend-text { font-family: Arial, sans-serif; font-size: 12px; fill: #2c3e50; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#34495e" />
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="400" y="30" class="title" text-anchor="middle">Sistema de Gestión de Roles - Jerarquía y Políticas</text>
+  
+  <!-- Role Hierarchy -->
+  <g id="hierarchy">
+    <!-- Owner -->
+    <rect x="350" y="60" width="100" height="50" class="role-box" style="fill: #8e44ad;"/>
+    <text x="400" y="80" class="role-text">OWNER</text>
+    <text x="400" y="95" class="level-text">Nivel: 100</text>
+    
+    <!-- Admin -->
+    <rect x="350" y="130" width="100" height="50" class="role-box" style="fill: #e67e22;"/>
+    <text x="400" y="150" class="role-text">ADMIN</text>
+    <text x="400" y="165" class="level-text">Nivel: 80</text>
+    
+    <!-- Moderator -->
+    <rect x="350" y="200" width="100" height="50" class="role-box" style="fill: #f39c12;"/>
+    <text x="400" y="220" class="role-text">MODERATOR</text>
+    <text x="400" y="235" class="level-text">Nivel: 60</text>
+    
+    <!-- Support -->
+    <rect x="350" y="270" width="100" height="50" class="role-box" style="fill: #27ae60;"/>
+    <text x="400" y="290" class="role-text">SUPPORT</text>
+    <text x="400" y="305" class="level-text">Nivel: 40</text>
+    
+    <!-- User -->
+    <rect x="350" y="340" width="100" height="50" class="role-box" style="fill: #3498db;"/>
+    <text x="400" y="360" class="role-text">USER</text>
+    <text x="400" y="375" class="level-text">Nivel: 20</text>
+    
+    <!-- Hierarchy Arrows -->
+    <line x1="400" y1="110" x2="400" y2="130" class="arrow"/>
+    <line x1="400" y1="180" x2="400" y2="200" class="arrow"/>
+    <line x1="400" y1="250" x2="400" y2="270" class="arrow"/>
+    <line x1="400" y1="320" x2="400" y2="340" class="arrow"/>
+  </g>
+  
+  <!-- Policies Section -->
+  <g id="policies">
+    <text x="100" y="80" class="legend-text" font-weight="bold">Políticas por Jerarquía:</text>
+    
+    <!-- RequireAdminOrAbove -->
+    <rect x="50" y="100" width="140" height="30" class="policy-box"/>
+    <text x="120" y="120" class="policy-text">RequireAdminOrAbove</text>
+    <line x1="190" y1="115" x2="350" y2="155" class="arrow"/>
+    
+    <!-- RequireModeratorOrAbove -->
+    <rect x="50" y="140" width="160" height="30" class="policy-box"/>
+    <text x="130" y="160" class="policy-text">RequireModeratorOrAbove</text>
+    <line x1="210" y1="155" x2="350" y2="225" class="arrow"/>
+    
+    <!-- RequireElevatedRoles -->
+    <rect x="50" y="180" width="140" height="30" class="policy-box"/>
+    <text x="120" y="200" class="policy-text">RequireElevatedRoles</text>
+    <line x1="190" y1="195" x2="350" y2="225" class="arrow"/>
+  </g>
+  
+  <!-- Permissions Section -->
+  <g id="permissions">
+    <text x="550" y="80" class="legend-text" font-weight="bold">Políticas por Permisos:</text>
+    
+    <!-- CanManageUsers -->
+    <rect x="500" y="100" width="120" height="25" class="policy-box" style="fill: #9b59b6;"/>
+    <text x="560" y="117" class="policy-text">CanManageUsers</text>
+    <line x1="500" y1="112" x2="450" y2="155" class="arrow"/>
+    
+    <!-- CanManageRoles -->
+    <rect x="500" y="130" width="120" height="25" class="policy-box" style="fill: #9b59b6;"/>
+    <text x="560" y="147" class="policy-text">CanManageRoles</text>
+    <line x1="500" y1="142" x2="450" y2="85" class="arrow"/>
+    
+    <!-- CanViewReports -->
+    <rect x="500" y="160" width="120" height="25" class="policy-box" style="fill: #9b59b6;"/>
+    <text x="560" y="177" class="policy-text">CanViewReports</text>
+    <line x1="500" y1="172" x2="450" y2="225" class="arrow"/>
+    
+    <!-- CanModerateContent -->
+    <rect x="500" y="190" width="130" height="25" class="policy-box" style="fill: #9b59b6;"/>
+    <text x="565" y="207" class="policy-text">CanModerateContent</text>
+    <line x1="500" y1="202" x2="450" y2="225" class="arrow"/>
+    
+    <!-- CanAccessSupport -->
+    <rect x="500" y="220" width="120" height="25" class="policy-box" style="fill: #9b59b6;"/>
+    <text x="560" y="237" class="policy-text">CanAccessSupport</text>
+    <line x1="500" y1="232" x2="450" y2="295" class="arrow"/>
+  </g>
+  
+  <!-- Authority Flow -->
+  <g id="authority-flow">
+    <text x="400" y="430" class="legend-text" font-weight="bold" text-anchor="middle">Flujo de Autoridad</text>
+    <text x="400" y="450" class="legend-text" text-anchor="middle">Los roles superiores heredan todos los permisos de los roles inferiores</text>
+    
+    <!-- Authority indicators -->
+    <text x="480" y="85" class="legend-text" font-size="10">✓ Acceso Total</text>
+    <text x="480" y="155" class="legend-text" font-size="10">✓ Gestión Sistema</text>
+    <text x="480" y="225" class="legend-text" font-size="10">✓ Moderación</text>
+    <text x="480" y="295" class="legend-text" font-size="10">✓ Soporte</text>
+    <text x="480" y="365" class="legend-text" font-size="10">✓ Acceso Básico</text>
+  </g>
+  
+  <!-- Legend -->
+  <g id="legend">
+    <rect x="50" y="480" width="700" height="100" class="legend-box"/>
+    <text x="60" y="500" class="legend-text" font-weight="bold">Leyenda:</text>
+    
+    <rect x="60" y="510" width="15" height="15" style="fill: #e74c3c;"/>
+    <text x="85" y="522" class="legend-text">Políticas de Autorización</text>
+    
+    <rect x="250" y="510" width="15" height="15" style="fill: #9b59b6;"/>
+    <text x="275" y="522" class="legend-text">Políticas de Permisos</text>
+    
+    <rect x="450" y="510" width="15" height="15" style="fill: #3498db;"/>
+    <text x="475" y="522" class="legend-text">Roles del Sistema</text>
+    
+    <text x="60" y="545" class="legend-text">• Los números indican el nivel de jerarquía (mayor número = mayor autoridad)</text>
+    <text x="60" y="560" class="legend-text">• Las flechas muestran la dirección del flujo de autoridad y aplicación de políticas</text>
+    <text x="60" y="575" class="legend-text">• Un usuario con rol superior puede realizar todas las acciones de roles inferiores</text>
+  </g>
+</svg>
