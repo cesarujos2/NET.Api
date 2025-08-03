@@ -8,16 +8,15 @@ namespace NET.Api.Infrastructure.Authorization.Handlers;
 /// <summary>
 /// Handler para validar jerarquía de roles
 /// </summary>
-public class RoleHierarchyHandler(IRoleManagementService roleManagementService) : AuthorizationHandler<RoleHierarchyRequirement>
+public class RoleHierarchyHandler(IRoleAuthorizationService roleAuthorizationService) : AuthorizationHandler<RoleHierarchyRequirement>
 {
-    protected override Task HandleRequirementAsync(
+    protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         RoleHierarchyRequirement requirement)
     {
-
         var userRoles = context.User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
 
-        if (roleManagementService.HasSufficientAuthority(userRoles, requirement.RequiredRole))
+        if (await roleAuthorizationService.HasSufficientAuthorityAsync(userRoles, requirement.RequiredRole))
         {
             context.Succeed(requirement);
         }
@@ -25,8 +24,6 @@ public class RoleHierarchyHandler(IRoleManagementService roleManagementService) 
         {
             context.Fail();
         }
-
-        return Task.CompletedTask;
     }
 }
 
@@ -57,9 +54,9 @@ public class MultipleRolesHandler : AuthorizationHandler<MultipleRolesRequiremen
 /// <summary>
 /// Handler para validar permisos específicos
 /// </summary>
-public class PermissionHandler(IRoleManagementService roleManagementService) : AuthorizationHandler<PermissionRequirement>
+public class PermissionHandler(IRoleAuthorizationService roleAuthorizationService) : AuthorizationHandler<PermissionRequirement>
 {
-    protected override Task HandleRequirementAsync(
+    protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         PermissionRequirement requirement)
     {
@@ -67,7 +64,7 @@ public class PermissionHandler(IRoleManagementService roleManagementService) : A
         if (!context.User.Identity?.IsAuthenticated ?? true)
         {
             context.Fail();
-            return Task.CompletedTask;
+            return;
         }
 
         var userRoles = context.User.FindAll(ClaimTypes.Role).Select(c => c.Value);
@@ -75,11 +72,11 @@ public class PermissionHandler(IRoleManagementService roleManagementService) : A
         // Lógica de permisos basada en roles
         var hasPermission = requirement.Permission switch
         {
-            "CanManageUsers" => roleManagementService.HasSufficientAuthority(userRoles, "Admin"),
-            "CanManageRoles" => roleManagementService.HasSufficientAuthority(userRoles, "Owner"),
-            "CanViewReports" => roleManagementService.HasSufficientAuthority(userRoles, "Moderator"),
-            "CanModerateContent" => roleManagementService.HasSufficientAuthority(userRoles, "Moderator"),
-            "CanAccessSupport" => roleManagementService.HasSufficientAuthority(userRoles, "Support"),
+            "CanManageUsers" => await roleAuthorizationService.HasSufficientAuthorityAsync(userRoles, "Admin"),
+            "CanManageRoles" => await roleAuthorizationService.HasSufficientAuthorityAsync(userRoles, "Owner"),
+            "CanViewReports" => await roleAuthorizationService.HasSufficientAuthorityAsync(userRoles, "Moderator"),
+            "CanModerateContent" => await roleAuthorizationService.HasSufficientAuthorityAsync(userRoles, "Moderator"),
+            "CanAccessSupport" => await roleAuthorizationService.HasSufficientAuthorityAsync(userRoles, "Support"),
             _ => false
         };
 
@@ -91,7 +88,5 @@ public class PermissionHandler(IRoleManagementService roleManagementService) : A
         {
             context.Fail();
         }
-
-        return Task.CompletedTask;
     }
 }

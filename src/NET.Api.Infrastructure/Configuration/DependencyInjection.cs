@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using NET.Api.Application.Abstractions.Services;
+using NET.Api.Application.Abstractions.Services.IRoleService;
 using NET.Api.Application.Configuration;
 using NET.Api.Domain.Entities;
 using NET.Api.Domain.Interfaces;
@@ -14,6 +15,7 @@ using NET.Api.Infrastructure.Authorization;
 using NET.Api.Infrastructure.Persistence;
 using NET.Api.Infrastructure.Repositories;
 using NET.Api.Infrastructure.Services;
+using NET.Api.Infrastructure.Services.RoleService;
 using System.Text;
 
 namespace NET.Api.Infrastructure.Configuration;
@@ -84,12 +86,16 @@ public static class DependencyInjection
         services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
         
         // Register domain services
-        services.AddScoped<IRoleManagementService, RoleManagementService>();
+        services.AddScoped<IRoleHierarchyService, RoleHierarchyService>();
+        services.AddScoped<IRoleValidationService, RoleValidationService>();
+        services.AddScoped<IRoleAuthorizationService, RoleAuthorizationService>();
         
         // Register application services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IRoleManagementService, RoleManagementService>();
+        services.AddScoped<IRoleQueryService, RoleQueryService>();
         
         // Configure authorization policies and handlers
         services.ConfigureAuthorizationPolicies();

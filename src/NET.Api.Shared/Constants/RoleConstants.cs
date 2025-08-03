@@ -75,6 +75,32 @@ public static class RoleConstants
     };
 
     /// <summary>
+    /// Límites del sistema para roles
+    /// </summary>
+    public static class Limits
+    {
+        /// <summary>
+        /// Número máximo de usuarios que pueden tener el rol Owner
+        /// </summary>
+        public const int MaxOwners = 3;
+        
+        /// <summary>
+        /// Número máximo de roles que puede tener un usuario
+        /// </summary>
+        public const int MaxRolesPerUser = 5;
+        
+        /// <summary>
+        /// Longitud mínima del nombre de rol
+        /// </summary>
+        public const int MinRoleNameLength = 3;
+        
+        /// <summary>
+        /// Longitud máxima del nombre de rol
+        /// </summary>
+        public const int MaxRoleNameLength = 50;
+    }
+
+    /// <summary>
     /// Verifica si un rol es válido
     /// </summary>
     /// <param name="role">Nombre del rol</param>
@@ -111,5 +137,15 @@ public static class RoleConstants
     public static bool HasSufficientAuthority(string role, string requiredRole)
     {
         return GetRoleHierarchy(role) >= GetRoleHierarchy(requiredRole);
+    }
+
+    /// <summary>
+    /// Verifica si un rol es un rol estático del sistema
+    /// </summary>
+    /// <param name="role">Nombre del rol</param>
+    /// <returns>True si es un rol estático del sistema</returns>
+    public static bool IsStaticRole(string role)
+    {
+        return AllRoles.Contains(role, StringComparer.OrdinalIgnoreCase);
     }
 }
