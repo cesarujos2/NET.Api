@@ -1,16 +1,17 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NET.Api.Application.Features.EmailTemplates.Queries.GetEmailTemplates;
-using NET.Api.Application.Features.EmailTemplates.Queries.GetEmailTemplate;
-using NET.Api.Application.Features.EmailTemplates.Commands.UpdateEmailTemplate;
 using NET.Api.Application.Common.Models.EmailTemplate;
+using NET.Api.Application.Features.EmailTemplates.Commands.UpdateEmailTemplate;
+using NET.Api.Application.Features.EmailTemplates.Queries.GetEmailTemplate;
+using NET.Api.Application.Features.EmailTemplates.Queries.GetEmailTemplates;
+using static NET.Api.Shared.Constants.ApiConstants;
 
 namespace NET.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Policy = Policies.RequireAdminOrAbove)]
 public class EmailTemplatesController(IMediator mediator) : ControllerBase
 {
     /// <summary>

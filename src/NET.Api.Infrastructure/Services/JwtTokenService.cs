@@ -1,9 +1,9 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using NET.Api.Application.Abstractions.Services;
 using NET.Api.Application.Configuration;
@@ -18,7 +18,7 @@ public class JwtTokenService(IOptions<JwtSettings> jwtSettings, ApplicationDbCon
 
     public Task<string> GenerateAccessTokenAsync(string userId, string email, List<string> roles)
     {
-        var tokenHandler = new JwtSecurityTokenHandler();
+        var tokenHandler = new JsonWebTokenHandler();
         var key = Encoding.UTF8.GetBytes(_jwtSettings.SecretKey);
 
         var claims = new List<Claim>
@@ -26,8 +26,7 @@ public class JwtTokenService(IOptions<JwtSettings> jwtSettings, ApplicationDbCon
             new(ClaimTypes.NameIdentifier, userId),
             new(ClaimTypes.Email, email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-            new(JwtRegisteredClaimNames.Iss, _jwtSettings.Issuer)
+            new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
         };
 
         // Add role claims
@@ -45,7 +44,7 @@ public class JwtTokenService(IOptions<JwtSettings> jwtSettings, ApplicationDbCon
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 
-        var token = tokenHandler.CreateEncodedJwt(tokenDescriptor);
+        var token = tokenHandler.CreateToken(tokenDescriptor);
         return Task.FromResult(token);
     }
 
@@ -125,11 +124,11 @@ public class JwtTokenService(IOptions<JwtSettings> jwtSettings, ApplicationDbCon
         await context.SaveChangesAsync();
     }
 
-    public string GetUserIdFromToken(string token)
+    public async Task<string> GetUserIdFromToken(string token)
     {
         try
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenHandler = new JsonWebTokenHandler();
             var key = Encoding.UTF8.GetBytes(_jwtSettings.SecretKey);
 
             var validationParameters = new TokenValidationParameters
@@ -144,10 +143,10 @@ public class JwtTokenService(IOptions<JwtSettings> jwtSettings, ApplicationDbCon
                 ClockSkew = TimeSpan.Zero
             };
 
-            var principal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
-            var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
+            var principal = await tokenHandler.ValidateTokenAsync(token, validationParameters);
+            var userIdClaim = principal.Claims.FirstOrDefault(x => x.Key == ClaimTypes.NameIdentifier).Value;
 
-            return userIdClaim?.Value ?? string.Empty;
+            return $"{userIdClaim}";
         }
         catch (Exception ex)
         {
@@ -159,6 +158,6 @@ public class JwtTokenService(IOptions<JwtSettings> jwtSettings, ApplicationDbCon
 
     public async Task<string> GetUserIdFromTokenAsync(string token)
     {
-        return await Task.FromResult(GetUserIdFromToken(token));
+        return await GetUserIdFromToken(token);
     }
 }

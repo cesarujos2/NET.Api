@@ -8,7 +8,9 @@ using NET.Api.Application.Abstractions.Services;
 using NET.Api.Application.Configuration;
 using NET.Api.Domain.Entities;
 using NET.Api.Domain.Interfaces;
+using NET.Api.Domain.Services;
 using NET.Api.Domain.ValueObjects;
+using NET.Api.Infrastructure.Authorization;
 using NET.Api.Infrastructure.Persistence;
 using NET.Api.Infrastructure.Repositories;
 using NET.Api.Infrastructure.Services;
@@ -25,8 +27,8 @@ public static class DependencyInjection
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseMySql(conectionString, ServerVersion.AutoDetect(conectionString)));
         
-        // Add Identity
-        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+        // Add Identity with custom ApplicationRole
+        services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
         {
             // Password settings
             options.Password.RequireDigit = true;
@@ -81,10 +83,17 @@ public static class DependencyInjection
         // Register repositories
         services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
         
-        // Register services
+        // Register domain services
+        services.AddScoped<IRoleManagementService, RoleManagementService>();
+        
+        // Register application services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IEmailService, EmailService>();
+        
+        // Configure authorization policies and handlers
+        services.ConfigureAuthorizationPolicies();
+        services.RegisterAuthorizationHandlers();
         
         return services;
     }

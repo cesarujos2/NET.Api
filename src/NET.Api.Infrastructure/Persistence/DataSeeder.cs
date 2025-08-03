@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NET.Api.Domain.Entities;
 using NET.Api.Infrastructure.Persistence.Seeders;
+using NET.Api.Shared.Constants;
 
 namespace NET.Api.Infrastructure.Persistence;
 
@@ -12,12 +13,12 @@ public static class DataSeeder
     {
         using var scope = serviceProvider.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<ApplicationDbContext>>();
 
         try
         {
-            await SeedRolesAsync(roleManager, logger);
+            await RoleSeeder.SeedAsync(roleManager, logger);
             await SeedOwnerUserAsync(userManager, logger);
             await SeedEmailTemplatesAsync(serviceProvider, logger);
         }
@@ -28,28 +29,7 @@ public static class DataSeeder
         }
     }
 
-    private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager, ILogger logger)
-    {
-        var roles = new[] { "Owner", "Admin", "User" };
 
-        foreach (var role in roles)
-        {
-            if (!await roleManager.RoleExistsAsync(role))
-            {
-                var identityRole = new IdentityRole(role);
-                var result = await roleManager.CreateAsync(identityRole);
-                
-                if (result.Succeeded)
-                {
-                    logger.LogInformation($"Role '{role}' created successfully.");
-                }
-                else
-                {
-                    logger.LogError($"Failed to create role '{role}': {string.Join(", ", result.Errors.Select(e => e.Description))}");
-                }
-            }
-        }
-    }
 
     private static async Task SeedOwnerUserAsync(UserManager<ApplicationUser> userManager, ILogger logger)
     {
@@ -76,7 +56,7 @@ public static class DataSeeder
             if (result.Succeeded)
             {
                 // Assign Owner role
-                await userManager.AddToRoleAsync(ownerUser, "Owner");
+                await userManager.AddToRoleAsync(ownerUser, RoleConstants.Names.Owner);
                 logger.LogInformation($"Owner user created successfully with email: {ownerEmail}");
                 logger.LogInformation($"Owner user password: {ownerPassword}");
                 logger.LogInformation($"Owner user document: {ownerDocument}");
@@ -91,9 +71,9 @@ public static class DataSeeder
             logger.LogInformation("Owner user already exists.");
             
             // Ensure owner has the Owner role
-            if (!await userManager.IsInRoleAsync(existingUser, "Owner"))
+            if (!await userManager.IsInRoleAsync(existingUser, RoleConstants.Names.Owner))
             {
-                await userManager.AddToRoleAsync(existingUser, "Owner");
+                await userManager.AddToRoleAsync(existingUser, RoleConstants.Names.Owner);
                 logger.LogInformation("Owner role assigned to existing owner user.");
             }
         }

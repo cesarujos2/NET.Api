@@ -11,6 +11,5 @@ public interface IJwtTokenService: IApplicationService
     Task SaveRefreshTokenAsync(string userId, string refreshToken);
     Task RevokeRefreshTokenAsync(string refreshToken);
     Task RevokeAllRefreshTokensAsync(string userId);
-    string GetUserIdFromToken(string token);
     Task<string> GetUserIdFromTokenAsync(string token);
 }

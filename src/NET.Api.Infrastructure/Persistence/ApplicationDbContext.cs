@@ -4,7 +4,7 @@ using NET.Api.Domain.Entities;
 
 namespace NET.Api.Infrastructure.Persistence;
 
-public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
@@ -45,9 +45,33 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasDatabaseName("IX_Users_Email");
         });
         
+        // Configure ApplicationRole
+        builder.Entity<ApplicationRole>(entity =>
+        {
+            entity.Property(e => e.Description)
+                .HasMaxLength(500);
+                
+            entity.Property(e => e.HierarchyLevel)
+                .IsRequired();
+                
+            entity.Property(e => e.IsActive)
+                .IsRequired()
+                .HasDefaultValue(true);
+                
+            entity.Property(e => e.IsSystemRole)
+                .IsRequired()
+                .HasDefaultValue(false);
+                
+            entity.Property(e => e.CreatedAt)
+                .IsRequired();
+                
+            entity.Property(e => e.UpdatedAt)
+                .IsRequired(false);
+        });
+        
         // Configure Identity tables with Oracle naming conventions
         builder.Entity<ApplicationUser>().ToTable("USERS");
-        builder.Entity<Microsoft.AspNetCore.Identity.IdentityRole>().ToTable("ROLES");
+        builder.Entity<ApplicationRole>().ToTable("ROLES");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<string>>().ToTable("USER_ROLES");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserClaim<string>>().ToTable("USER_CLAIMS");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserLogin<string>>().ToTable("USER_LOGINS");

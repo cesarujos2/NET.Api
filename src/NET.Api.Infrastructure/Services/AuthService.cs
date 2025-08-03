@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using NET.Api.Application.Abstractions.Services;
 using NET.Api.Application.Common.Models.Authentication;
 using NET.Api.Domain.Entities;
+using NET.Api.Shared.Constants;
 
 namespace NET.Api.Infrastructure.Services;
 
@@ -49,7 +50,7 @@ public class AuthService(
         }
 
         // Assign default "User" role
-        var roleResult = await userManager.AddToRoleAsync(user, "User");
+        var roleResult = await userManager.AddToRoleAsync(user, RoleConstants.Names.User);
         if (!roleResult.Succeeded)
         {
             var roleErrors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
@@ -138,7 +139,7 @@ public class AuthService(
         }
 
         // Get user ID from access token (even if expired)
-        var userId = jwtTokenService.GetUserIdFromToken(accessToken);
+        var userId = await jwtTokenService.GetUserIdFromTokenAsync(accessToken);
         if (string.IsNullOrEmpty(userId))
         {
             throw new UnauthorizedAccessException("Invalid access token.");
