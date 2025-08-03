@@ -11,4 +11,5 @@ public class AuthResponseDto
     public string RefreshToken { get; set; } = string.Empty;
     public DateTime ExpiresAt { get; set; }
     public List<string> Roles { get; set; } = new();
+    public bool RequiresEmailConfirmation { get; set; } = false;
 }

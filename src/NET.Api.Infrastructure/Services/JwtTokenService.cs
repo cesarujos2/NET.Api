@@ -12,28 +12,22 @@ using NET.Api.Infrastructure.Persistence;
 
 namespace NET.Api.Infrastructure.Services;
 
-public class JwtTokenService : IJwtTokenService
+public class JwtTokenService(IOptions<JwtSettings> jwtSettings, ApplicationDbContext context) : IJwtTokenService
 {
-    private readonly JwtSettings _jwtSettings;
-    private readonly ApplicationDbContext _context;
+    private readonly JwtSettings _jwtSettings = jwtSettings.Value;
 
-    public JwtTokenService(IOptions<JwtSettings> jwtSettings, ApplicationDbContext context)
-    {
-        _jwtSettings = jwtSettings.Value;
-        _context = context;
-    }
-
-    public async Task<string> GenerateAccessTokenAsync(string userId, string email, List<string> roles)
+    public Task<string> GenerateAccessTokenAsync(string userId, string email, List<string> roles)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
+        var key = Encoding.UTF8.GetBytes(_jwtSettings.SecretKey);
 
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, userId),
             new(ClaimTypes.Email, email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+            new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+            new(JwtRegisteredClaimNames.Iss, _jwtSettings.Issuer)
         };
 
         // Add role claims
@@ -44,15 +38,15 @@ public class JwtTokenService : IJwtTokenService
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
             Issuer = _jwtSettings.Issuer,
             Audience = _jwtSettings.Audience,
+            Subject = new ClaimsIdentity(claims),
+            Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
+        var token = tokenHandler.CreateEncodedJwt(tokenDescriptor);
+        return Task.FromResult(token);
     }
 
     public async Task<string> GenerateRefreshTokenAsync(string userId)
@@ -61,16 +55,16 @@ public class JwtTokenService : IJwtTokenService
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomNumber);
         var refreshToken = Convert.ToBase64String(randomNumber);
-        
+
         // Save refresh token to database
         await SaveRefreshTokenAsync(userId, refreshToken);
-        
+
         return refreshToken;
     }
 
     public async Task<bool> ValidateRefreshTokenAsync(string refreshToken)
     {
-        var storedToken = await _context.RefreshTokens
+        var storedToken = await context.RefreshTokens
             .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
 
         return storedToken != null && storedToken.IsActive;
@@ -79,7 +73,7 @@ public class JwtTokenService : IJwtTokenService
     public async Task SaveRefreshTokenAsync(string userId, string refreshToken)
     {
         // Revoke existing refresh tokens for the user
-        var existingTokens = await _context.RefreshTokens
+        var existingTokens = await context.RefreshTokens
             .Where(rt => rt.UserId == userId && rt.IsRevoked == false)
             .ToListAsync();
 
@@ -99,26 +93,26 @@ public class JwtTokenService : IJwtTokenService
             IsRevoked = false
         };
 
-        _context.RefreshTokens.Add(newRefreshToken);
-        await _context.SaveChangesAsync();
+        context.RefreshTokens.Add(newRefreshToken);
+        await context.SaveChangesAsync();
     }
 
     public async Task RevokeRefreshTokenAsync(string refreshToken)
     {
-        var token = await _context.RefreshTokens
+        var token = await context.RefreshTokens
             .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.IsRevoked == false);
 
         if (token != null)
         {
             token.IsRevoked = true;
             token.RevokedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task RevokeAllRefreshTokensAsync(string userId)
     {
-        var tokens = await _context.RefreshTokens
+        var tokens = await context.RefreshTokens
             .Where(rt => rt.UserId == userId && rt.IsRevoked == false)
             .ToListAsync();
 
@@ -128,7 +122,7 @@ public class JwtTokenService : IJwtTokenService
             token.RevokedAt = DateTime.UtcNow;
         }
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     public string GetUserIdFromToken(string token)
@@ -136,7 +130,7 @@ public class JwtTokenService : IJwtTokenService
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
+            var key = Encoding.UTF8.GetBytes(_jwtSettings.SecretKey);
 
             var validationParameters = new TokenValidationParameters
             {
@@ -152,11 +146,13 @@ public class JwtTokenService : IJwtTokenService
 
             var principal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
             var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
-            
+
             return userIdClaim?.Value ?? string.Empty;
         }
-        catch
+        catch (Exception ex)
         {
+            // Log the exception for debugging purposes
+            Console.WriteLine($"Error validating token: {ex.Message}");
             return string.Empty;
         }
     }

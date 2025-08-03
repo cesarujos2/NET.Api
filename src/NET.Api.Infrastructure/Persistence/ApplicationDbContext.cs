@@ -11,6 +11,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     }
     
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<EmailTemplate> EmailTemplates { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -77,6 +78,45 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+        
+        // Configure EmailTemplate
+        builder.Entity<EmailTemplate>(entity =>
+        {
+            entity.ToTable("EMAIL_TEMPLATES");
+            
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .IsRequired();
+                
+            entity.Property(e => e.Subject)
+                .HasMaxLength(200)
+                .IsRequired();
+                
+            entity.Property(e => e.HtmlContent)
+                .HasColumnType("TEXT")
+                .IsRequired();
+                
+            entity.Property(e => e.TextContent)
+                .HasColumnType("TEXT")
+                .IsRequired();
+                
+            entity.Property(e => e.TemplateType)
+                .HasMaxLength(50)
+                .IsRequired();
+                
+            entity.Property(e => e.Description)
+                .HasMaxLength(500);
+                
+            entity.Property(e => e.CreatedBy)
+                .HasMaxLength(450);
+                
+            entity.Property(e => e.UpdatedBy)
+                .HasMaxLength(450);
+                
+            entity.HasIndex(e => e.TemplateType)
+                .IsUnique()
+                .HasDatabaseName("IX_EmailTemplates_TemplateType");
         });
     }
 }

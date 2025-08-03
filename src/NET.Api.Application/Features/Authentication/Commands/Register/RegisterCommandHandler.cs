@@ -26,6 +26,6 @@ public class RegisterCommandHandler : ICommandHandler<RegisterCommand, AuthRespo
             PhoneNumber = request.PhoneNumber
         };
 
-        return await _authService.RegisterAsync(registerRequest);
+        return await _authService.RegisterAsync(registerRequest, request.BaseUrl);
     }
 }

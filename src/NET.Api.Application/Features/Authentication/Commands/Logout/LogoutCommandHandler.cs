@@ -6,11 +6,13 @@ namespace NET.Api.Application.Features.Authentication.Commands.Logout;
 
 public class LogoutCommandHandler : ICommandHandler<LogoutCommand, bool>
 {
+    private readonly IAuthService _authService;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly ILogger<LogoutCommandHandler> _logger;
 
-    public LogoutCommandHandler(IJwtTokenService jwtTokenService, ILogger<LogoutCommandHandler> logger)
+    public LogoutCommandHandler(IAuthService authService, IJwtTokenService jwtTokenService, ILogger<LogoutCommandHandler> logger)
     {
+        _authService = authService;
         _jwtTokenService = jwtTokenService;
         _logger = logger;
     }
@@ -21,16 +23,8 @@ public class LogoutCommandHandler : ICommandHandler<LogoutCommand, bool>
         {
             _logger.LogInformation("Starting logout process for user {UserId}", request.UserId);
             
-            // Validar que el token pertenece al usuario
-            var tokenUserId = _jwtTokenService.GetUserIdFromToken(request.AccessToken);
-            if (tokenUserId != request.UserId)
-            {
-                _logger.LogWarning("Token mismatch during logout for user {UserId}", request.UserId);
-                throw new UnauthorizedAccessException("Token no válido para este usuario.");
-            }
-            
-            // Revocar todos los refresh tokens del usuario
-            await _jwtTokenService.RevokeAllRefreshTokensAsync(request.UserId);
+            // Usar el servicio de autenticación para hacer logout
+            await _authService.LogoutAsync(request.UserId);
             
             _logger.LogInformation("User {UserId} logged out successfully. All refresh tokens revoked.", request.UserId);
             

@@ -3,7 +3,7 @@ using NET.Api.Domain.Entities;
 
 namespace NET.Api.Application.Abstractions.Services;
 
-public interface IJwtTokenService
+public interface IJwtTokenService: IApplicationService
 {
     Task<string> GenerateAccessTokenAsync(string userId, string email, List<string> roles);
     Task<string> GenerateRefreshTokenAsync(string userId);

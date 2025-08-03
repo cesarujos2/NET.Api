@@ -14,7 +14,7 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     Log.Information("Iniciando aplicación NET.Api...");
-    
+
     var builder = WebApplication.CreateBuilder(args);
 
     // Configurar logging avanzado
@@ -25,43 +25,42 @@ try
 
     // Add services using dependency injection configuration
     builder.Services.AddWebApiServices(builder.Configuration);
-    
+
     // Añadir servicios de memoria cache para rate limiting
     builder.Services.AddMemoryCache();
 
-var app = builder.Build();
+    // Add services using Swagger configuration
+    builder.Services.AddSwaggerConfiguration(builder.Configuration);
 
-// Apply migrations and seed data
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    
-    try
+    var app = builder.Build();
+
+    // Apply migrations and seed data
+    using (var scope = app.Services.CreateScope())
     {
-        logger.LogInformation("Applying database migrations...");
-        await context.Database.MigrateAsync();
-        logger.LogInformation("Database migrations applied successfully.");
-        
-        logger.LogInformation("Seeding database...");
-        await DataSeeder.SeedAsync(scope.ServiceProvider);
-        logger.LogInformation("Database seeded successfully.");
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        try
+        {
+            logger.LogInformation("Applying database migrations...");
+            await context.Database.MigrateAsync();
+            logger.LogInformation("Database migrations applied successfully.");
+
+            logger.LogInformation("Seeding database...");
+            await DataSeeder.SeedAsync(scope.ServiceProvider);
+            logger.LogInformation("Database seeded successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while initializing the database.");
+            throw;
+        }
     }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "An error occurred while initializing the database.");
-        throw;
-    }
-}
 
     // Configure the HTTP request pipeline
     Log.Information("Configurando pipeline de middleware...");
-    
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+
+    app.UseSwaggerConfiguration(app.Environment);
 
     // Middleware de logging de requests (debe ir temprano)
     app.UseRequestLogging();
@@ -86,7 +85,7 @@ using (var scope = app.Services.CreateScope())
     app.MapControllers();
 
     Log.Information("Aplicación NET.Api iniciada correctamente en {Environment}", app.Environment.EnvironmentName);
-    
+
     await app.RunAsync();
 }
 catch (Exception ex)

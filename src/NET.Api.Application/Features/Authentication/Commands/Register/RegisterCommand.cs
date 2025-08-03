@@ -12,4 +12,5 @@ public class RegisterCommand : ICommand<AuthResponseDto>
     public string LastName { get; set; } = string.Empty;
     public string IdentityDocument { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
+    public string BaseUrl { get; set; } = string.Empty;
 }

@@ -1,6 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <Compile Remove="Abstractions\Persistence\**" />
+    <EmbeddedResource Remove="Abstractions\Persistence\**" />
+    <None Remove="Abstractions\Persistence\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\NET.Api.Domain\NET.Api.Domain.csproj" />
     <ProjectReference Include="..\NET.Api.Shared\NET.Api.Shared.csproj" />
   </ItemGroup>
@@ -9,10 +15,6 @@
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="FluentValidation" Version="12.0.0" />
     <PackageReference Include="MediatR" Version="13.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Abstractions\Persistence\" />
   </ItemGroup>
 
   <PropertyGroup>

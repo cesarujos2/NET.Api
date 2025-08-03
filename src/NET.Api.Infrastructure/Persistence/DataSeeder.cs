@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NET.Api.Domain.Entities;
+using NET.Api.Infrastructure.Persistence.Seeders;
 
 namespace NET.Api.Infrastructure.Persistence;
 
@@ -18,6 +19,7 @@ public static class DataSeeder
         {
             await SeedRolesAsync(roleManager, logger);
             await SeedOwnerUserAsync(userManager, logger);
+            await SeedEmailTemplatesAsync(serviceProvider, logger);
         }
         catch (Exception ex)
         {
@@ -94,6 +96,22 @@ public static class DataSeeder
                 await userManager.AddToRoleAsync(existingUser, "Owner");
                 logger.LogInformation("Owner role assigned to existing owner user.");
             }
+        }
+    }
+    
+    private static async Task SeedEmailTemplatesAsync(IServiceProvider serviceProvider, ILogger logger)
+    {
+        try
+        {
+            using var scope = serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await EmailTemplateSeeder.SeedAsync(context);
+            logger.LogInformation("Email templates seeded successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while seeding email templates.");
+            throw;
         }
     }
 }

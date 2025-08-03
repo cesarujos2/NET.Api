@@ -7,7 +7,10 @@ using Microsoft.IdentityModel.Tokens;
 using NET.Api.Application.Abstractions.Services;
 using NET.Api.Application.Configuration;
 using NET.Api.Domain.Entities;
+using NET.Api.Domain.Interfaces;
+using NET.Api.Domain.ValueObjects;
 using NET.Api.Infrastructure.Persistence;
+using NET.Api.Infrastructure.Repositories;
 using NET.Api.Infrastructure.Services;
 using System.Text;
 
@@ -72,9 +75,16 @@ public static class DependencyInjection
         // Configure JWT Settings
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
         
+        // Configure SMTP Settings
+        services.Configure<SmtpConfiguration>(configuration.GetSection("Smtp"));
+        
+        // Register repositories
+        services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
+        
         // Register services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IEmailService, EmailService>();
         
         return services;
     }

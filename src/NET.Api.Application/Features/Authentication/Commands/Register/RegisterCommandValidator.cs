@@ -1,4 +1,5 @@
 using FluentValidation;
+using NET.Api.Shared.Utilities;
 
 namespace NET.Api.Application.Features.Authentication.Commands.Register;
 
@@ -37,5 +38,9 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
         RuleFor(x => x.PhoneNumber)
             .MaximumLength(15).WithMessage("El número de teléfono no puede exceder 15 caracteres.")
             .When(x => !string.IsNullOrEmpty(x.PhoneNumber));
+
+        RuleFor(x => x.BaseUrl)
+            .NotEmpty().WithMessage("La URL base es requerida.")
+            .Must(UrlValidator.IsValidHttpUrl).WithMessage("La URL base debe ser una URL válida.");
     }
 }

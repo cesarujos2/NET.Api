@@ -16,7 +16,7 @@ public class SecurityMiddleware
 
     // Patrones para detectar ataques comunes
     private static readonly Regex SqlInjectionPattern = new(
-        @"('|(\-\-)|(;)|(\||\|)|(\*|\*)|(%)|(\+)|(\=)|(\<)|(\>)|(\^)|(\()|(\))|(\[)|(\])|(\{)|(\})|(,)|(\.)|(\?)|(\\)|(/)|(\:)|(\!)|(\@)|(\#)|(\$)|(\&)|(\~)|(\`)|(\|)|(\+)|(\=)|(\<)|(\>)|(\^)|(\()|(\))|(\[)|(\])|(\{)|(\})|(,)|(\.)|(\?)|(\\)|(/)|(\:)|(\!)|(\@)|(\#)|(\$)|(\&)|(\~)|(\`)|(select|insert|update|delete|drop|create|alter|exec|execute|union|script|javascript|vbscript|onload|onerror|onclick)\s",
+        @"(\b(select|insert|update|delete|drop|create|alter|exec|execute|union)\s)|(';)|(--)|(\/\*)|(\*\/)|('\s*(or|and)\s*')|('\s*(=|<|>)\s*')|(\bunion\s+select)|(\bexec\s*\()|(\bexecute\s*\()",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex XssPattern = new(
