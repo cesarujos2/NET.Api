@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="NetArchTest.Rules" Version="1.3.2" />
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\NET.Api.Domain\NET.Api.Domain.csproj" />
+    <ProjectReference Include="..\..\src\NET.Api.Application\NET.Api.Application.csproj" />
+    <ProjectReference Include="..\..\src\NET.Api.Infrastructure\NET.Api.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\NET.Api.WebApi\NET.Api.csproj" />
+    <ProjectReference Include="..\..\src\NET.Api.Shared\NET.Api.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="FluentAssertions" />
+    <Using Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+</Project>
