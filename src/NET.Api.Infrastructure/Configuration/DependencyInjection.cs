@@ -27,7 +27,7 @@ public static class DependencyInjection
         // Add Entity Framework with Mysql
         var conectionString = configuration.GetConnectionString("DefaultConnection");
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseMySql(conectionString, ServerVersion.AutoDetect(conectionString)));
+            options.UseOracle(conectionString, opt => opt.UseOracleSQLCompatibility(OracleSQLCompatibility.DatabaseVersion19)));
         
         // Add Identity with custom ApplicationRole
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
