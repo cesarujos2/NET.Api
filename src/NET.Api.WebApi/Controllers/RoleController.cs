@@ -103,22 +103,22 @@ public class RoleController(
         }
         catch (UnauthorizedAccessException ex)
         {
-            logger.LogWarning(ex, "Acceso no autorizado al crear rol: {RoleName}", request.Name);
+            logger.LogWarning(ex, "Unauthorized access creating role: {RoleName}", request.Name);
             return Forbid();
         }
         catch (BusinessRuleException ex)
         {
-            logger.LogWarning(ex, "Violación de regla de negocio al crear rol: {RoleName}", request.Name);
+            logger.LogWarning(ex, "Business rule violation creating role: {RoleName}", request.Name);
             return BadRequest(new { success = false, message = ex.Message, errorCode = ex.RuleName });
         }
         catch (ValidationException ex)
         {
-            logger.LogWarning(ex, "Error de validación al crear rol: {RoleName}", request.Name);
+            logger.LogWarning(ex, "Validation error creating role: {RoleName}", request.Name);
             return BadRequest(new { success = false, message = ex.Message });
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error al crear rol: {RoleName}", request.Name);
+            logger.LogError(ex, "Error creating role: {RoleName}", request.Name);
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
@@ -149,27 +149,27 @@ public class RoleController(
         }
         catch (UnauthorizedAccessException ex)
         {
-            logger.LogWarning(ex, "Acceso no autorizado al actualizar rol: {RoleId}", roleId);
+            logger.LogWarning(ex, "Unauthorized access updating role: {RoleId}", roleId);
             return Forbid();
         }
         catch (NotFoundException ex)
         {
-            logger.LogWarning(ex, "Rol no encontrado al actualizar: {RoleId}", roleId);
+            logger.LogWarning(ex, "Role not found when updating: {RoleId}", roleId);
             return NotFound(new { success = false, message = ex.Message });
         }
         catch (BusinessRuleException ex)
         {
-            logger.LogWarning(ex, "Violación de regla de negocio al actualizar rol: {RoleId}", roleId);
+            logger.LogWarning(ex, "Business rule violation updating role: {RoleId}", roleId);
             return BadRequest(new { success = false, message = ex.Message, errorCode = ex.RuleName });
         }
         catch (ValidationException ex)
         {
-            logger.LogWarning(ex, "Error de validación al actualizar rol: {RoleId}", roleId);
+            logger.LogWarning(ex, "Validation error updating role: {RoleId}", roleId);
             return BadRequest(new { success = false, message = ex.Message });
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error al actualizar rol: {RoleId}", roleId);
+            logger.LogError(ex, "Error updating role: {RoleId}", roleId);
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
@@ -191,27 +191,27 @@ public class RoleController(
         }
         catch (UnauthorizedAccessException ex)
         {
-            logger.LogWarning(ex, "Acceso no autorizado al eliminar rol: {RoleId}", roleId);
+            logger.LogWarning(ex, "Unauthorized access deleting role: {RoleId}", roleId);
             return Forbid();
         }
         catch (NotFoundException ex)
         {
-            logger.LogWarning(ex, "Rol no encontrado al eliminar: {RoleId}", roleId);
+            logger.LogWarning(ex, "Role not found when deleting: {RoleId}", roleId);
             return NotFound(new { success = false, message = ex.Message });
         }
         catch (BusinessRuleException ex)
         {
-            logger.LogWarning(ex, "Violación de regla de negocio al eliminar rol: {RoleId}", roleId);
+            logger.LogWarning(ex, "Business rule violation deleting role: {RoleId}", roleId);
             return BadRequest(new { success = false, message = ex.Message, errorCode = ex.RuleName });
         }
         catch (ValidationException ex)
         {
-            logger.LogWarning(ex, "Error de validación al eliminar rol: {RoleId}", roleId);
+            logger.LogWarning(ex, "Validation error deleting role: {RoleId}", roleId);
             return BadRequest(new { success = false, message = ex.Message });
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error al eliminar rol: {RoleId}", roleId);
+            logger.LogError(ex, "Error deleting role: {RoleId}", roleId);
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
@@ -233,25 +233,25 @@ public class RoleController(
         }
         catch (UnauthorizedAccessException ex)
         {
-            logger.LogWarning(ex, "Acceso no autorizado al asignar rol {RoleName} a usuario {UserId}", 
+            logger.LogWarning(ex, "Unauthorized access assigning role {RoleName} to user {UserId}", 
                 request.RoleName, request.UserId);
             return Forbid();
         }
         catch (NotFoundException ex)
         {
-            logger.LogWarning(ex, "Usuario o rol no encontrado al asignar rol {RoleName} a usuario {UserId}", 
+            logger.LogWarning(ex, "User or role not found when assigning role {RoleName} to user {UserId}", 
                 request.RoleName, request.UserId);
             return NotFound(new { success = false, message = ex.Message });
         }
         catch (BusinessRuleException ex)
         {
-            logger.LogWarning(ex, "Violación de regla de negocio al asignar rol {RoleName} a usuario {UserId}", 
+            logger.LogWarning(ex, "Business rule violation assigning role {RoleName} to user {UserId}", 
                 request.RoleName, request.UserId);
             return BadRequest(new { success = false, message = ex.Message, errorCode = ex.RuleName });
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error al asignar rol {RoleName} a usuario {UserId}", 
+            logger.LogError(ex, "Error assigning role {RoleName} to user {UserId}", 
                 request.RoleName, request.UserId);
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
@@ -274,25 +274,25 @@ public class RoleController(
         }
         catch (UnauthorizedAccessException ex)
         {
-            logger.LogWarning(ex, "Acceso no autorizado al remover rol {RoleName} de usuario {UserId}", 
+            logger.LogWarning(ex, "Unauthorized access removing role {RoleName} from user {UserId}", 
                 request.RoleName, request.UserId);
             return Forbid();
         }
         catch (NotFoundException ex)
         {
-            logger.LogWarning(ex, "Usuario o rol no encontrado al remover rol {RoleName} de usuario {UserId}", 
+            logger.LogWarning(ex, "User or role not found when removing role {RoleName} from user {UserId}", 
                 request.RoleName, request.UserId);
             return NotFound(new { success = false, message = ex.Message });
         }
         catch (BusinessRuleException ex)
         {
-            logger.LogWarning(ex, "Violación de regla de negocio al remover rol {RoleName} de usuario {UserId}", 
+            logger.LogWarning(ex, "Business rule violation removing role {RoleName} from user {UserId}", 
                 request.RoleName, request.UserId);
             return BadRequest(new { success = false, message = ex.Message, errorCode = ex.RuleName });
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error al remover rol {RoleName} de usuario {UserId}", 
+            logger.LogError(ex, "Error removing role {RoleName} from user {UserId}", 
                 request.RoleName, request.UserId);
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }

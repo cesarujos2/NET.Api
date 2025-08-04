@@ -44,13 +44,13 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
 
         if (failures.Any())
         {
-            _logger.LogWarning("Errores de validación encontrados en {RequestName}: {ErrorCount} errores", 
+            _logger.LogWarning("Validation errors found in {RequestName}: {ErrorCount} errors", 
                 requestName, failures.Count);
             
             throw new Exceptions.ValidationException(failures);
         }
 
-        _logger.LogDebug("Validación exitosa para {RequestName}", requestName);
+        _logger.LogDebug("Validation successful for {RequestName}", requestName);
         return await next();
     }
 }

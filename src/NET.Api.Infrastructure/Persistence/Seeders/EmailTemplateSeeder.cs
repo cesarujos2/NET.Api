@@ -13,7 +13,7 @@ public static class EmailTemplateSeeder
 
         var templates = new List<EmailTemplate>
         {
-            new EmailTemplate(
+            new(
                 "Confirmación de Email",
                 "Confirma tu dirección de correo electrónico - {{UserName}}",
                 GetEmailConfirmationHtmlTemplate(),
@@ -23,7 +23,7 @@ public static class EmailTemplateSeeder
                 "owner@netapi.com"
             ),
             
-            new EmailTemplate(
+            new(
                 "Restablecer Contraseña",
                 "Restablece tu contraseña - {{UserName}}",
                 GetPasswordResetHtmlTemplate(),
@@ -33,13 +33,23 @@ public static class EmailTemplateSeeder
                 "owner@netapi.com"
             ),
             
-            new EmailTemplate(
+            new(
                 "Bienvenida",
                 "¡Bienvenido a NET.Api! - {{UserName}}",
                 GetWelcomeHtmlTemplate(),
                 GetWelcomeTextTemplate(),
                 EmailTemplateTypes.Welcome,
                 "Template de bienvenida para nuevos usuarios",
+                "owner@netapi.com"
+            ),
+            
+            new(
+                "Cambio de Email",
+                "Confirma tu nuevo correo electrónico - {{UserName}}",
+                GetEmailChangeHtmlTemplate(),
+                GetEmailChangeTextTemplate(),
+                EmailTemplateTypes.EmailChange,
+                "Template para confirmar el cambio de dirección de correo electrónico",
                 "owner@netapi.com"
             )
         };
@@ -218,7 +228,67 @@ Estamos emocionados de tenerte como parte de nuestra comunidad.
 Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.
 
 Gracias por elegir NET.Api
+© 2024 NET.Api. Todos los derechos reservados.";
+    }
 
+    private static string GetEmailChangeHtmlTemplate()
+    {
+        return @"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Confirma tu nuevo correo electrónico</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #007bff; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9f9f9; }
+        .footer { background-color: #333; color: white; padding: 10px; text-align: center; font-size: 12px; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; }
+        .button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <div class=""container"">
+        <div class=""header"">
+            <h1>Confirma tu nuevo correo electrónico</h1>
+        </div>
+        <div class=""content"">
+            <h2>Hola {{UserName}},</h2>
+            <p>Has solicitado cambiar tu dirección de correo electrónico. Para completar este cambio, necesitamos que confirmes tu nueva dirección.</p>
+            <p>Haz clic en el siguiente botón para confirmar tu nuevo correo electrónico:</p>
+            <p style=""text-align: center;"">
+                <a href=""{{ConfirmationUrl}}"" class=""button"">Confirmar Nuevo Email</a>
+            </p>
+            <p>Si no solicitaste este cambio, puedes ignorar este correo. Tu dirección de correo actual permanecerá sin cambios.</p>
+            <p><strong>Nota:</strong> Este enlace expirará en 24 horas por motivos de seguridad.</p>
+        </div>
+        <div class=""footer"">
+            <p>Gracias por usar NET.Api</p>
+            <p>&copy; 2024 NET.Api. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
+    private static string GetEmailChangeTextTemplate()
+    {
+        return @"
+¡Hola {{UserName}}!
+
+Has solicitado cambiar tu dirección de correo electrónico. Para completar este cambio, necesitamos que confirmes tu nueva dirección.
+
+Haz clic en el siguiente enlace para confirmar tu nuevo correo electrónico:
+{{ConfirmationUrl}}
+
+Si no solicitaste este cambio, puedes ignorar este correo. Tu dirección de correo actual permanecerá sin cambios.
+
+Nota: Este enlace expirará en 24 horas por motivos de seguridad.
+
+Gracias por usar NET.Api
 © 2024 NET.Api. Todos los derechos reservados.";
     }
 }

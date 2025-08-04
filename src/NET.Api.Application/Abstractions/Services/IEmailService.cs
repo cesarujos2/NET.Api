@@ -6,4 +6,5 @@ public interface IEmailService
     Task SendEmailConfirmationAsync(string to, string confirmationToken, string userName, string baseUrl);
     Task SendPasswordResetAsync(string to, string resetToken, string userName, string baseUrl);
     Task SendWelcomeEmailAsync(string to, string userName);
+    Task SendEmailChangeConfirmationAsync(string to, string userName, string confirmationUrl);
 }

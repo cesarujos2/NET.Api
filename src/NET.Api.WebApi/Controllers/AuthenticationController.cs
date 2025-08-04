@@ -10,7 +10,6 @@ using NET.Api.Application.Features.Authentication.Commands.ConfirmEmail;
 using NET.Api.Application.Features.Authentication.Commands.ResendEmailConfirmation;
 using NET.Api.Application.Features.Authentication.Commands.ForgotPassword;
 using NET.Api.Application.Features.Authentication.Commands.ResetPassword;
-using NET.Api.Application.Features.Authentication.Queries.GetUserProfile;
 using System.Security.Claims;
 using NET.Api.Application.Common.Models.Authentication;
 
@@ -210,41 +209,6 @@ public class AuthenticationController(IMediator mediator) : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return Unauthorized(new { success = false, message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
-        }
-    }
-
-    /// <summary>
-    /// Get current user profile (requires authentication)
-    /// </summary>
-    /// <returns>Current user information</returns>
-    [HttpGet("profile")]
-    [Authorize]
-    public async Task<ActionResult<UserProfileDto>> GetProfile()
-    {
-        try
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(new { success = false, message = "Usuario no autenticado." });
-            }
-
-            var query = new GetUserProfileQuery
-            {
-                UserId = userId
-            };
-
-            var result = await mediator.Send(query);
-            return Ok(new { success = true, message = "Perfil obtenido exitosamente.", data = result });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(new { success = false, message = ex.Message });
         }
         catch (Exception ex)
         {

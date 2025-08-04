@@ -1,7 +1,7 @@
 using NET.Api.Application.Abstractions.Messaging;
 using NET.Api.Application.Common.Models.Authentication;
 
-namespace NET.Api.Application.Features.Authentication.Queries.GetUserProfile;
+namespace NET.Api.Application.Features.UserAccount.Queries.GetProfile;
 
 public class GetUserProfileQuery : IQuery<UserProfileDto>
 {

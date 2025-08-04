@@ -115,4 +115,26 @@ public class EmailService(
 
         await SendEmailAsync(to, subject, htmlContent, textContent);
     }
+
+    public async Task SendEmailChangeConfirmationAsync(string to, string userName, string confirmationUrl)
+    {
+        var template = await emailTemplateRepository.GetByTypeAsync(EmailTemplateTypes.EmailChange);
+        if (template == null)
+        {
+            logger.LogError("Email change confirmation template not found");
+            throw new InvalidOperationException("Email change confirmation template not found");
+        }
+
+        var htmlContent = template.HtmlContent
+            .Replace("{{UserName}}", userName)
+            .Replace("{{ConfirmationUrl}}", confirmationUrl);
+            
+        var textContent = template.TextContent
+            .Replace("{{UserName}}", userName)
+            .Replace("{{ConfirmationUrl}}", confirmationUrl);
+
+        var subject = template.Subject.Replace("{{UserName}}", userName);
+
+        await SendEmailAsync(to, subject, htmlContent, textContent);
+    }
 }
