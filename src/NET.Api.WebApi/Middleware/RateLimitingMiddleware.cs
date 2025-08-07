@@ -144,10 +144,10 @@ public class RateLimitingMiddleware
         var retryAfterSeconds = (int)Math.Ceiling(timeUntilReset.TotalSeconds);
 
         context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
-        context.Response.Headers.Add("Retry-After", retryAfterSeconds.ToString());
-        context.Response.Headers.Add("X-RateLimit-Limit", _options.MaxRequests.ToString());
-        context.Response.Headers.Add("X-RateLimit-Remaining", "0");
-        context.Response.Headers.Add("X-RateLimit-Reset", ((DateTimeOffset)counter.WindowStart.AddMinutes(_options.WindowSizeInMinutes)).ToUnixTimeSeconds().ToString());
+        context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
+        context.Response.Headers["X-RateLimit-Limit"] = _options.MaxRequests.ToString();
+        context.Response.Headers["X-RateLimit-Remaining"] = "0";
+        context.Response.Headers["X-RateLimit-Reset"] = ((DateTimeOffset)counter.WindowStart.AddMinutes(_options.WindowSizeInMinutes)).ToUnixTimeSeconds().ToString();
         context.Response.ContentType = "application/json";
 
         var errorResponse = ErrorResponse.Create(
@@ -172,9 +172,9 @@ public class RateLimitingMiddleware
         var remaining = Math.Max(0, _options.MaxRequests - counter.Count);
         var resetTime = ((DateTimeOffset)counter.WindowStart.AddMinutes(_options.WindowSizeInMinutes)).ToUnixTimeSeconds();
 
-        context.Response.Headers.Add("X-RateLimit-Limit", _options.MaxRequests.ToString());
-        context.Response.Headers.Add("X-RateLimit-Remaining", remaining.ToString());
-        context.Response.Headers.Add("X-RateLimit-Reset", resetTime.ToString());
+        context.Response.Headers["X-RateLimit-Limit"] = _options.MaxRequests.ToString();
+        context.Response.Headers["X-RateLimit-Remaining"] = remaining.ToString();
+        context.Response.Headers["X-RateLimit-Reset"] = resetTime.ToString();
     }
 }
 
