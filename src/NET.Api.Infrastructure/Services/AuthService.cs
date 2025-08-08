@@ -12,6 +12,7 @@ public class AuthService(
     SignInManager<ApplicationUser> signInManager,
     IJwtTokenService jwtTokenService,
     IEmailService emailService,
+    IGoogleAuthService googleAuthService,
     ILogger<AuthService> logger) : IAuthService
 {
     public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request, string baseUrl)
@@ -378,5 +379,15 @@ public class AuthService(
             logger.LogError(ex, "Error occurred while logging out user: {UserId}", userId);
             throw new InvalidOperationException("An error occurred while logging out.");
         }
+    }
+
+    public async Task<AuthResponseDto> GoogleLoginAsync(GoogleAuthRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.GoogleIdToken))
+        {
+            throw new ArgumentException("El token de Google es requerido");
+        }
+
+        return await googleAuthService.AuthenticateWithGoogleAsync(request.GoogleIdToken);
     }
 }

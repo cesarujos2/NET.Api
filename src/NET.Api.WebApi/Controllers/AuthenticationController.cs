@@ -10,6 +10,7 @@ using NET.Api.Application.Features.Authentication.Commands.ConfirmEmail;
 using NET.Api.Application.Features.Authentication.Commands.ResendEmailConfirmation;
 using NET.Api.Application.Features.Authentication.Commands.ForgotPassword;
 using NET.Api.Application.Features.Authentication.Commands.ResetPassword;
+using NET.Api.Application.Features.Authentication.Commands.GoogleLogin;
 using System.Security.Claims;
 using NET.Api.Application.Common.Models.Authentication;
 
@@ -248,6 +249,38 @@ public class AuthenticationController(IMediator mediator) : ControllerBase
             }
             
             return BadRequest(new { success = false, message = "Error al cerrar sesión." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Login with Google authentication
+    /// </summary>
+    /// <param name="request">Google ID token</param>
+    /// <returns>Authentication response with user data and token</returns>
+    [HttpPost("google-login")]
+    public async Task<ActionResult<AuthResponseDto>> GoogleLogin([FromBody] GoogleAuthRequestDto request)
+    {
+        try
+        {
+            var command = new GoogleLoginCommand
+            {
+                GoogleIdToken = request.GoogleIdToken
+            };
+
+            var result = await mediator.Send(command);
+            return Ok(new { success = true, message = "Autenticación con Google exitosa.", data = result });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
         }
         catch (Exception ex)
         {

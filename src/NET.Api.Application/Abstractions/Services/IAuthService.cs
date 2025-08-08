@@ -11,5 +11,6 @@ public interface IAuthService: IApplicationService
     Task<bool> ResendEmailConfirmationAsync(string email, string baseUrl);
     Task<bool> ForgotPasswordAsync(string email, string baseUrl);
     Task<AuthResponseDto> ResetPasswordAsync(string email, string token, string newPassword);
+    Task<AuthResponseDto> GoogleLoginAsync(GoogleAuthRequestDto request);
     Task<bool> LogoutAsync(string userId);
 }

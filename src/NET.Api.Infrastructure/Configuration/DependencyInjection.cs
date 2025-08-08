@@ -82,6 +82,9 @@ public static class DependencyInjection
         // Configure SMTP Settings
         services.Configure<SmtpConfiguration>(configuration.GetSection("Smtp"));
         
+        // Configure Google authentication settings
+        services.Configure<GoogleAuthSettings>(configuration.GetSection(GoogleAuthSettings.SectionName));
+        
         // Register repositories
         services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
         
@@ -91,6 +94,7 @@ public static class DependencyInjection
         services.AddScoped<IRoleAuthorizationService, RoleAuthorizationService>();
         
         // Register application services
+        services.AddScoped<IGoogleAuthService, GoogleAuthService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IEmailService, EmailService>();
