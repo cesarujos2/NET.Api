@@ -24,13 +24,6 @@ public class AuthService(
             throw new InvalidOperationException("El usuario ya existe con este correo electrónico.");
         }
 
-        // Check if identity document already exists
-        var existingDocument = userManager.Users.FirstOrDefault(u => u.IdentityDocument == request.IdentityDocument);
-        if (existingDocument != null)
-        {
-            throw new InvalidOperationException("Ya existe un usuario con este documento de identidad.");
-        }
-
         // Create new user
         var user = new ApplicationUser
         {
@@ -38,7 +31,6 @@ public class AuthService(
             Email = request.Email,
             FirstName = request.FirstName,
             LastName = request.LastName,
-            IdentityDocument = request.IdentityDocument,
             PhoneNumber = request.PhoneNumber,
             EmailConfirmed = false // Require email confirmation
         };
@@ -60,7 +52,7 @@ public class AuthService(
 
         // Generate email confirmation token
         var emailConfirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        
+
         // Send email confirmation
         await emailService.SendEmailConfirmationAsync(
             user.Email!,
@@ -80,7 +72,7 @@ public class AuthService(
             AccessToken = string.Empty, // No token until email is confirmed
             RefreshToken = string.Empty, // No token until email is confirmed
             ExpiresAt = DateTime.UtcNow,
-            Roles = new List<string>(),
+            Roles = [RoleConstants.Names.User],
             RequiresEmailConfirmation = true
         };
     }
@@ -111,7 +103,7 @@ public class AuthService(
 
         // Get user roles
         var roles = await userManager.GetRolesAsync(user);
-        
+
         // Generate JWT tokens
         var accessToken = await jwtTokenService.GenerateAccessTokenAsync(user.Id, user.Email!, roles.ToList());
         var refreshToken = await jwtTokenService.GenerateRefreshTokenAsync(user.Id);
@@ -221,7 +213,7 @@ public class AuthService(
 
         // Get user roles
         var roles = await userManager.GetRolesAsync(user);
-        
+
         // Generate JWT tokens
         var accessToken = await jwtTokenService.GenerateAccessTokenAsync(user.Id, user.Email!, roles.ToList());
         var refreshToken = await jwtTokenService.GenerateRefreshTokenAsync(user.Id);
@@ -265,7 +257,7 @@ public class AuthService(
         {
             // Generate new email confirmation token
             var emailConfirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
-            
+
             // Send email confirmation
             await emailService.SendEmailConfirmationAsync(
                 user.Email!,
@@ -334,7 +326,7 @@ public class AuthService(
 
             // Get user roles
             var roles = await userManager.GetRolesAsync(user);
-            
+
             // Generate new tokens
             var accessToken = await jwtTokenService.GenerateAccessTokenAsync(user.Id, user.Email!, roles.ToList());
             var refreshToken = await jwtTokenService.GenerateRefreshTokenAsync(user.Id);
@@ -383,11 +375,7 @@ public class AuthService(
 
     public async Task<AuthResponseDto> GoogleLoginAsync(GoogleAuthRequestDto request)
     {
-        if (string.IsNullOrWhiteSpace(request.GoogleIdToken))
-        {
-            throw new ArgumentException("El token de Google es requerido");
-        }
-
-        return await googleAuthService.AuthenticateWithGoogleAsync(request.GoogleIdToken);
+        var idToken = await googleAuthService.ExchangeCodeForIdTokenAsync(request.Code, request.RedirectUri);
+        return await googleAuthService.AuthenticateWithGoogleAsync(idToken);
     }
 }

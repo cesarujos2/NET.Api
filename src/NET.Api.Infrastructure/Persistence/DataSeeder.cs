@@ -35,7 +35,6 @@ public static class DataSeeder
     {
         const string ownerEmail = "owner@netapi.com";
         const string ownerPassword = "Owner123!";
-        const string ownerDocument = "OWNER001";
 
         var existingUser = await userManager.FindByEmailAsync(ownerEmail);
         if (existingUser == null)
@@ -46,7 +45,6 @@ public static class DataSeeder
                 Email = ownerEmail,
                 FirstName = "System",
                 LastName = "Owner",
-                IdentityDocument = ownerDocument,
                 EmailConfirmed = true,
                 PhoneNumberConfirmed = true,
                 IsActive = true
@@ -59,7 +57,6 @@ public static class DataSeeder
                 await userManager.AddToRoleAsync(ownerUser, RoleConstants.Names.Owner);
                 logger.LogInformation($"Owner user created successfully with email: {ownerEmail}");
                 logger.LogInformation($"Owner user password: {ownerPassword}");
-                logger.LogInformation($"Owner user document: {ownerDocument}");
             }
             else
             {

@@ -1,10 +1,11 @@
 using MediatR;
 using NET.Api.Application.Abstractions.Services;
+using NET.Api.Application.Abstractions.Messaging;
 using NET.Api.Application.Common.Models.Authentication;
 
 namespace NET.Api.Application.Features.Authentication.Commands.GoogleLogin;
 
-public class GoogleLoginCommandHandler : IRequestHandler<GoogleLoginCommand, AuthResponseDto>
+public class GoogleLoginCommandHandler : ICommandHandler<GoogleLoginCommand, AuthResponseDto>
 {
     private readonly IAuthService _authService;
 
@@ -17,7 +18,8 @@ public class GoogleLoginCommandHandler : IRequestHandler<GoogleLoginCommand, Aut
     {
         var googleAuthRequest = new GoogleAuthRequestDto
         {
-            GoogleIdToken = request.GoogleIdToken
+            Code = request.Code,
+            RedirectUri = request.RedirectUri,
         };
 
         return await _authService.GoogleLoginAsync(googleAuthRequest);

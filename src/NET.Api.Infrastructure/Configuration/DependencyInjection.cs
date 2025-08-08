@@ -75,6 +75,9 @@ public static class DependencyInjection
                 ClockSkew = TimeSpan.Zero
             };
         });
+
+        //Add HttpClientFactory
+        services.AddHttpClient();
         
         // Configure JWT Settings
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));

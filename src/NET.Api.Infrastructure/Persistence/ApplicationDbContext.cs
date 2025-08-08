@@ -27,15 +27,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             entity.Property(e => e.LastName)
                 .HasMaxLength(100)
                 .IsRequired();
-                
-            entity.Property(e => e.IdentityDocument)
-                .HasMaxLength(20)
-                .IsRequired();
-                
-            entity.HasIndex(e => e.IdentityDocument)
-                .IsUnique()
-                .HasDatabaseName("IX_Users_IdentityDocument");
-                
+
             entity.Property(e => e.Email)
                 .HasMaxLength(256)
                 .IsRequired();

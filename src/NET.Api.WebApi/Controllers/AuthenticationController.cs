@@ -13,6 +13,7 @@ using NET.Api.Application.Features.Authentication.Commands.ResetPassword;
 using NET.Api.Application.Features.Authentication.Commands.GoogleLogin;
 using System.Security.Claims;
 using NET.Api.Application.Common.Models.Authentication;
+using NET.Api.Application.Features.Authentication.Commands.GoogleAuthUrl;
 
 namespace NET.Api.Controllers;
 
@@ -261,14 +262,15 @@ public class AuthenticationController(IMediator mediator) : ControllerBase
     /// </summary>
     /// <param name="request">Google ID token</param>
     /// <returns>Authentication response with user data and token</returns>
-    [HttpPost("google-login")]
+    [HttpPost("google/login")]
     public async Task<ActionResult<AuthResponseDto>> GoogleLogin([FromBody] GoogleAuthRequestDto request)
     {
         try
         {
             var command = new GoogleLoginCommand
             {
-                GoogleIdToken = request.GoogleIdToken
+                Code = request.Code,
+                RedirectUri = request.RedirectUri
             };
 
             var result = await mediator.Send(command);
@@ -281,6 +283,31 @@ public class AuthenticationController(IMediator mediator) : ControllerBase
         catch (ArgumentException ex)
         {
             return BadRequest(new { success = false, message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get Google authentication URL
+    /// </summary>
+    /// <param name="redirectUri">Redirect URI</param>
+    /// <param name="state">State parameter</param>
+    /// <returns>Google authentication URL</returns>
+    [HttpGet("google/auth-url")]
+    public async Task<ActionResult<GoogleAuthUrlResponseDto>> GetGoogleAuthUrl([FromQuery] string redirectUri, [FromQuery] string? state = null)
+    {
+        try{
+            var command = new GoogleAuthUrlCommand
+            {
+                RedirectUri = redirectUri,
+                State = state
+            };
+
+            var result = await mediator.Send(command);
+            return Ok(new { success = true, message = "URL de autenticación con Google obtenida exitosamente.", data = result });
         }
         catch (Exception ex)
         {
