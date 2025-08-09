@@ -13,18 +13,12 @@ namespace NET.Api.Infrastructure.Services;
 
 public class GoogleAuthService(
     UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager,
     IJwtTokenService jwtTokenService,
     IOptions<GoogleAuthSettings> googleSettings,
     IHttpClientFactory httpClientFactory,
     ILogger<GoogleAuthService> logger) : IGoogleAuthService
 {
-    private readonly UserManager<ApplicationUser> _userManager = userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
-    private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
     private readonly GoogleAuthSettings _googleSettings = googleSettings.Value;
-    private readonly ILogger<GoogleAuthService> _logger = logger;
-    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
     public async Task<AuthResponseDto> AuthenticateWithGoogleAsync(string googleIdToken)
     {
@@ -37,24 +31,9 @@ public class GoogleAuthService(
             }) ?? throw new InvalidOperationException("Token de Google inválido");
 
             // Check if user already exists
-            var existingUser = await _userManager.FindByEmailAsync(payload.Email);
+            var user = await userManager.FindByEmailAsync(payload.Email);
 
-            ApplicationUser user;
-
-
-            if (existingUser != null)
-            {
-                user = existingUser;
-
-                // Update user information if needed
-                if (string.IsNullOrEmpty(user.FirstName) || string.IsNullOrEmpty(user.LastName))
-                {
-                    user.FirstName = payload.GivenName ?? "Usuario";
-                    user.LastName = payload.FamilyName ?? "Google";
-                    await _userManager.UpdateAsync(user);
-                }
-            }
-            else
+            if (user == null)
             {
                 // Create new user
                 user = new ApplicationUser
@@ -66,27 +45,32 @@ public class GoogleAuthService(
                     EmailConfirmed = true, // Google already verified the email
                 };
 
-                var result = await _userManager.CreateAsync(user);
+                var result = await userManager.CreateAsync(user);
                 if (!result.Succeeded)
                 {
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                    _logger.LogError("Error al crear usuario de Google: {Errors}", errors);
+                    logger.LogError("Error al crear usuario de Google: {Errors}", errors);
                     throw new InvalidOperationException($"Error al crear el usuario: {errors}");
                 }
 
                 // Assign default role
-                await _userManager.AddToRoleAsync(user, RoleConstants.Names.User);
+                await userManager.AddToRoleAsync(user, RoleConstants.Names.User);
+            }
+
+            // Register external login if not already linked
+            var existingLogin = await userManager.FindByLoginAsync("Google", payload.Subject);
+            if (existingLogin == null)
+            {
+                var loginInfo = new UserLoginInfo("Google", payload.Subject, "Google");
+                await userManager.AddLoginAsync(user, loginInfo);
             }
 
             // Generate JWT tokens
-            var roles = await _userManager.GetRolesAsync(user);
-            var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(user.Id, user.Email!, roles.ToList());
-            var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(user.Id);
+            var roles = await userManager.GetRolesAsync(user);
+            var accessToken = await jwtTokenService.GenerateAccessTokenAsync(user.Id, user.Email!, roles.ToList());
+            var refreshToken = await jwtTokenService.GenerateRefreshTokenAsync(user.Id);
 
-            // Sign in the user
-            await _signInManager.SignInAsync(user, isPersistent: false);
-
-            _logger.LogInformation("Usuario autenticado con Google exitosamente: {Email}", user.Email);
+            logger.LogInformation("Usuario autenticado con Google exitosamente: {Email}", user.Email);
 
             return new AuthResponseDto
             {
@@ -104,12 +88,12 @@ public class GoogleAuthService(
         }
         catch (InvalidJwtException ex)
         {
-            _logger.LogError(ex, "Token de Google inválido");
+            logger.LogError(ex, "Token de Google inválido");
             throw new InvalidOperationException("Token de Google inválido o expirado");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error durante la autenticación con Google");
+            logger.LogError(ex, "Error durante la autenticación con Google");
             throw new InvalidOperationException("Error al autenticar con Google. Por favor, intente nuevamente.");
         }
 
@@ -152,7 +136,7 @@ public class GoogleAuthService(
             throw new InvalidOperationException("La configuración de Google OAuth no está completa. Verifique ClientId y ClientSecret.");
         }
 
-        var httpClient = _httpClientFactory.CreateClient();
+        var httpClient = httpClientFactory.CreateClient();
         var tokenRequest = new Dictionary<string, string>
         {
             { "code", code },
@@ -168,7 +152,7 @@ public class GoogleAuthService(
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-            _logger.LogError("Error al intercambiar código por token: {Error}", errorContent);
+            logger.LogError("Error al intercambiar código por token: {Error}", errorContent);
             throw new InvalidOperationException("Error al intercambiar el código de autorización por un token de Google");
         }
 
@@ -177,7 +161,7 @@ public class GoogleAuthService(
         
         if (!tokenResponse.TryGetProperty("id_token", out var idTokenElement) || idTokenElement.ValueKind != JsonValueKind.String)
         {
-            _logger.LogError("La respuesta de Google no contiene un ID token válido: {Response}", responseContent);
+            logger.LogError("La respuesta de Google no contiene un ID token válido: {Response}", responseContent);
             throw new InvalidOperationException("La respuesta de Google no contiene un ID token válido");
         }
 

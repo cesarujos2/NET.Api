@@ -110,11 +110,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
                 .IsRequired();
                 
             entity.Property(e => e.HtmlContent)
-                .HasColumnType("TEXT")
+                .HasMaxLength(4000)
                 .IsRequired();
                 
             entity.Property(e => e.TextContent)
-                .HasColumnType("TEXT")
+                .HasMaxLength(4000)
                 .IsRequired();
                 
             entity.Property(e => e.TemplateType)

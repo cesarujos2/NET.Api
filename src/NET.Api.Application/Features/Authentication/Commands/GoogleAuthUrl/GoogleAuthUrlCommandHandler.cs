@@ -2,25 +2,23 @@ using MediatR;
 using NET.Api.Application.Abstractions.Services;
 using NET.Api.Application.Abstractions.Messaging;
 using NET.Api.Application.Common.Models.Authentication;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace NET.Api.Application.Features.Authentication.Commands.GoogleAuthUrl;
 
 /// <summary>
 /// Handler for GoogleAuthUrlCommand
 /// </summary>
-public class GoogleAuthUrlCommandHandler : ICommandHandler<GoogleAuthUrlCommand, GoogleAuthUrlResponseDto>
+public class GoogleAuthUrlCommandHandler(IGoogleAuthService googleAuthService, IMemoryCache memoryCache) : ICommandHandler<GoogleAuthUrlCommand, GoogleAuthUrlResponseDto>
 {
-    private readonly IGoogleAuthService _googleAuthService;
-
-    public GoogleAuthUrlCommandHandler(IGoogleAuthService googleAuthService)
-    {
-        _googleAuthService = googleAuthService;
-    }
-
     public Task<GoogleAuthUrlResponseDto> Handle(GoogleAuthUrlCommand request, CancellationToken cancellationToken)
     {
-        var state = request.State ?? Guid.NewGuid().ToString();
-        var authUrl = _googleAuthService.GetGoogleAuthUrl(request.RedirectUri, state);
+        var state = request.State;
+        var authUrl = googleAuthService.GetGoogleAuthUrl(request.RedirectUri, state);
+        
+        // Store state in cache for CSRF validation with 10 minutes expiration
+        var cacheKey = $"google_auth_state_{state}";
+        memoryCache.Set(cacheKey, true, TimeSpan.FromMinutes(10));
         
         return Task.FromResult(new GoogleAuthUrlResponseDto
         {

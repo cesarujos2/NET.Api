@@ -270,7 +270,8 @@ public class AuthenticationController(IMediator mediator) : ControllerBase
             var command = new GoogleLoginCommand
             {
                 Code = request.Code,
-                RedirectUri = request.RedirectUri
+                RedirectUri = request.RedirectUri,
+                State = request.State
             };
 
             var result = await mediator.Send(command);
@@ -303,7 +304,7 @@ public class AuthenticationController(IMediator mediator) : ControllerBase
             var command = new GoogleAuthUrlCommand
             {
                 RedirectUri = redirectUri,
-                State = state
+                State = state ?? Guid.NewGuid().ToString()
             };
 
             var result = await mediator.Send(command);

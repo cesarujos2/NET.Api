@@ -79,6 +79,9 @@ public static class DependencyInjection
         //Add HttpClientFactory
         services.AddHttpClient();
         
+        // Add Memory Cache for CSRF state validation
+        services.AddMemoryCache();
+        
         // Configure JWT Settings
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
         

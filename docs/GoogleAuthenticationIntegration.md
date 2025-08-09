@@ -24,7 +24,7 @@ This guide documents the complete integration of Google authentication into the 
 - **IGoogleAuthService**: Interface for Google authentication service
 
 #### 3. Infrastructure Layer
-- **GoogleAuthService**: Service for validating Google tokens and managing users
+- **GoogleAuthService**: Service for validating Google tokens and managing users with proper external login handling
 - **GoogleAuthSettings**: Configuration for Google OAuth
 - **AuthService**: Extended to include GoogleLoginAsync method
 
@@ -207,6 +207,37 @@ const response = await fetch('/api/authentication/google-login', {
 - User creation events are logged
 - Token validation failures are logged
 - Security events are logged with appropriate levels
+
+## External Login Integration
+
+### ExternalLoginSignInAsync Implementation
+The service now uses ASP.NET Core Identity's `ExternalLoginSignInAsync` method for proper external authentication handling:
+
+```csharp
+// Try external login sign in first
+var signInResult = await _signInManager.ExternalLoginSignInAsync(
+    "Google", payload.Subject, isPersistent: false, bypassTwoFactor: false);
+```
+
+### Benefits of ExternalLoginSignInAsync
+- **Integrated Security**: Leverages Identity's built-in security features
+- **Lockout Handling**: Automatically handles account lockouts
+- **Two-Factor Support**: Ready for 2FA implementation
+- **Consistent Flow**: Uses same authentication pipeline as other providers
+- **Policy Enforcement**: Applies all configured Identity policies
+
+### Authentication Flow
+1. **Primary Attempt**: Try external login with existing registration
+2. **Registration Check**: If failed, verify if external login exists
+3. **Auto-Registration**: Add external login if missing
+4. **Retry**: Attempt external login again after registration
+5. **Fallback**: Use regular sign-in if external login fails
+6. **Security Validation**: Check for lockouts and security policies
+
+### Error Handling
+- **Account Lockout**: Throws specific exception for locked accounts
+- **Registration Failures**: Logs warnings for external login registration issues
+- **Graceful Degradation**: Falls back to regular sign-in when needed
 
 ## Troubleshooting
 

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace NET.Api.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMysql : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,11 +16,49 @@ namespace NET.Api.Infrastructure.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "EMAIL_TEMPLATES",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Subject = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    HtmlContent = table.Column<string>(type: "varchar(4000)", maxLength: 4000, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    TextContent = table.Column<string>(type: "varchar(4000)", maxLength: 4000, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    TemplateType = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    CreatedBy = table.Column<string>(type: "varchar(450)", maxLength: 450, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    UpdatedBy = table.Column<string>(type: "varchar(450)", maxLength: 450, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EMAIL_TEMPLATES", x => x.Id);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "ROLES",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    HierarchyLevel = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: true),
+                    IsSystemRole = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     Name = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     NormalizedName = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true)
@@ -43,8 +81,6 @@ namespace NET.Api.Infrastructure.Migrations
                     FirstName = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     LastName = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    IdentityDocument = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
@@ -233,6 +269,12 @@ namespace NET.Api.Infrastructure.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateIndex(
+                name: "IX_EmailTemplates_TemplateType",
+                table: "EMAIL_TEMPLATES",
+                column: "TemplateType",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_Token",
                 table: "REFRESH_TOKENS",
                 column: "Token",
@@ -281,12 +323,6 @@ namespace NET.Api.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_IdentityDocument",
-                table: "USERS",
-                column: "IdentityDocument",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
                 table: "USERS",
                 column: "NormalizedUserName",
@@ -296,6 +332,9 @@ namespace NET.Api.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "EMAIL_TEMPLATES");
+
             migrationBuilder.DropTable(
                 name: "REFRESH_TOKENS");
 

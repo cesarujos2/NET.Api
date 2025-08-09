@@ -285,7 +285,8 @@ namespace NET.Api.Infrastructure.Migrations
 
                     b.Property<string>("HtmlContent")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(4000)
+                        .HasColumnType("varchar(4000)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
@@ -307,7 +308,8 @@ namespace NET.Api.Infrastructure.Migrations
 
                     b.Property<string>("TextContent")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(4000)
+                        .HasColumnType("varchar(4000)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");

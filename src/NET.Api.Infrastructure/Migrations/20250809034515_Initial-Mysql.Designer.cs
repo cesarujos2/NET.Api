@@ -12,8 +12,8 @@ using NET.Api.Infrastructure.Persistence;
 namespace NET.Api.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250803053601_FixUpdateAtNullable")]
-    partial class FixUpdateAtNullable
+    [Migration("20250809034515_Initial-Mysql")]
+    partial class InitialMysql
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -209,11 +209,6 @@ namespace NET.Api.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<string>("IdentityDocument")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
 
@@ -264,10 +259,6 @@ namespace NET.Api.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_Users_Email");
 
-                    b.HasIndex("IdentityDocument")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Users_IdentityDocument");
-
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -297,7 +288,8 @@ namespace NET.Api.Infrastructure.Migrations
 
                     b.Property<string>("HtmlContent")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(4000)
+                        .HasColumnType("varchar(4000)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
@@ -319,7 +311,8 @@ namespace NET.Api.Infrastructure.Migrations
 
                     b.Property<string>("TextContent")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(4000)
+                        .HasColumnType("varchar(4000)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
