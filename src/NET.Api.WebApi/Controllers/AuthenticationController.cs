@@ -13,7 +13,9 @@ using NET.Api.Application.Features.Authentication.Commands.ResetPassword;
 using NET.Api.Application.Features.Authentication.Commands.GoogleLogin;
 using System.Security.Claims;
 using NET.Api.Application.Common.Models.Authentication;
+using NET.Api.Application.Common.Models.UserAccount;
 using NET.Api.Application.Features.Authentication.Commands.GoogleAuthUrl;
+using NET.Api.Application.Features.Authentication.Commands.SelectAccount;
 
 namespace NET.Api.Controllers;
 
@@ -164,9 +166,9 @@ public class AuthenticationController(IMediator mediator) : ControllerBase
     /// Login with email and password
     /// </summary>
     /// <param name="request">Login credentials</param>
-    /// <returns>Authentication response with user data and token</returns>
+    /// <returns>Authentication response with user data and token or account selection</returns>
     [HttpPost("login")]
-    public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto request)
+    public async Task<ActionResult<LoginWithAccountSelectionResponseDto>> Login([FromBody] LoginRequestDto request)
     {
         try
         {
@@ -261,9 +263,9 @@ public class AuthenticationController(IMediator mediator) : ControllerBase
     /// Login with Google authentication
     /// </summary>
     /// <param name="request">Google ID token</param>
-    /// <returns>Authentication response with user data and token</returns>
+    /// <returns>Authentication response with user data and token or account selection</returns>
     [HttpPost("google/login")]
-    public async Task<ActionResult<AuthResponseDto>> GoogleLogin([FromBody] GoogleAuthRequestDto request)
+    public async Task<ActionResult<LoginWithAccountSelectionResponseDto>> GoogleLogin([FromBody] GoogleAuthRequestDto request)
     {
         try
         {
@@ -282,6 +284,39 @@ public class AuthenticationController(IMediator mediator) : ControllerBase
             return BadRequest(new { success = false, message = ex.Message });
         }
         catch (ArgumentException ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Select account for login
+    /// </summary>
+    /// <param name="request">Account selection request</param>
+    /// <returns>Authentication response with user data and token</returns>
+    [HttpPost("select-account")]
+    public async Task<ActionResult<AuthResponseDto>> SelectAccount([FromBody] SelectAccountRequestDto request)
+    {
+        try
+        {
+            var command = new SelectAccountCommand
+            {
+                SelectionToken = request.SelectionToken,
+                AccountId = request.AccountId
+            };
+
+            var result = await mediator.Send(command);
+            return Ok(new { success = true, message = "Cuenta seleccionada exitosamente.", data = result });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { success = false, message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
         {
             return BadRequest(new { success = false, message = ex.Message });
         }

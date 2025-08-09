@@ -106,6 +106,7 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IRoleManagementService, RoleManagementService>();
         services.AddScoped<IRoleQueryService, RoleQueryService>();
+        services.AddScoped<IUserAccountService, UserAccountService>();
         
         // Configure authorization policies and handlers
         services.ConfigureAuthorizationPolicies();

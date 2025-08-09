@@ -12,6 +12,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<EmailTemplate> EmailTemplates { get; set; }
+    public DbSet<UserAccount> UserAccounts { get; set; }
+    public DbSet<UserAccountData> UserAccountData { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -133,6 +135,116 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             entity.HasIndex(e => e.TemplateType)
                 .IsUnique()
                 .HasDatabaseName("IX_EmailTemplates_TemplateType");
+        });
+        
+        // Configure UserAccount
+        builder.Entity<UserAccount>(entity =>
+        {
+            entity.ToTable("USER_ACCOUNTS");
+            
+            entity.Property(e => e.Id)
+                .HasConversion(
+                    v => v.ToString(),
+                    v => Guid.Parse(v))
+                .HasMaxLength(36);
+            
+            entity.Property(e => e.ApplicationUserId)
+                .HasMaxLength(450)
+                .IsRequired();
+                
+            entity.Property(e => e.AccountName)
+                .HasMaxLength(100)
+                .IsRequired();
+                
+            entity.Property(e => e.Description)
+                .HasMaxLength(500);
+                
+            entity.Property(e => e.ProfilePictureUrl)
+                .HasMaxLength(500);
+                
+            entity.Property(e => e.Settings)
+                .HasColumnType("TEXT");
+                
+            entity.Property(e => e.CreatedBy)
+                .HasMaxLength(450);
+                
+            entity.Property(e => e.UpdatedBy)
+                .HasMaxLength(450);
+            
+            entity.HasIndex(e => e.ApplicationUserId)
+                .HasDatabaseName("IX_UserAccounts_ApplicationUserId");
+                
+            entity.HasIndex(e => new { e.ApplicationUserId, e.AccountName })
+                .IsUnique()
+                .HasDatabaseName("IX_UserAccounts_ApplicationUserId_AccountName");
+                
+            entity.HasIndex(e => new { e.ApplicationUserId, e.IsDefault })
+                .HasDatabaseName("IX_UserAccounts_ApplicationUserId_IsDefault")
+                .HasFilter("IsDefault = 1");
+            
+            entity.HasOne(e => e.ApplicationUser)
+                .WithMany(u => u.UserAccounts)
+                .HasForeignKey(e => e.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+        
+        // Configure UserAccountData
+        builder.Entity<UserAccountData>(entity =>
+        {
+            entity.ToTable("USER_ACCOUNT_DATA");
+            
+            entity.Property(e => e.Id)
+                .HasConversion(
+                    v => v.ToString(),
+                    v => Guid.Parse(v))
+                .HasMaxLength(36);
+            
+            entity.Property(e => e.UserAccountId)
+                .HasConversion(
+                    v => v.ToString(),
+                    v => Guid.Parse(v))
+                .HasMaxLength(36)
+                .IsRequired();
+                
+            entity.Property(e => e.DataKey)
+                .HasMaxLength(100)
+                .IsRequired();
+                
+            entity.Property(e => e.DataValue)
+                .HasColumnType("TEXT")
+                .IsRequired();
+                
+            entity.Property(e => e.DataType)
+                .HasMaxLength(50)
+                .IsRequired()
+                .HasDefaultValue("string");
+                
+            entity.Property(e => e.Category)
+                .HasMaxLength(100);
+                
+            entity.Property(e => e.Description)
+                .HasMaxLength(500);
+                
+            entity.Property(e => e.CreatedBy)
+                .HasMaxLength(450);
+                
+            entity.Property(e => e.UpdatedBy)
+                .HasMaxLength(450);
+            
+            entity.HasIndex(e => e.UserAccountId)
+                .HasDatabaseName("IX_UserAccountData_UserAccountId");
+                
+            entity.HasIndex(e => new { e.UserAccountId, e.DataKey })
+                .IsUnique()
+                .HasDatabaseName("IX_UserAccountData_UserAccountId_DataKey");
+                
+            entity.HasIndex(e => new { e.UserAccountId, e.Category })
+                .HasDatabaseName("IX_UserAccountData_UserAccountId_Category");
+            
+            entity.HasOne(e => e.UserAccount)
+                .WithMany(ua => ua.AccountData)
+                .HasForeignKey(e => e.UserAccountId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

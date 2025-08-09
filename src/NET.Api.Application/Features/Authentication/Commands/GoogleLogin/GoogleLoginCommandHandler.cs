@@ -7,9 +7,9 @@ using NET.Api.Domain.Exceptions;
 
 namespace NET.Api.Application.Features.Authentication.Commands.GoogleLogin;
 
-public class GoogleLoginCommandHandler(IAuthService authService, IMemoryCache memoryCache) : ICommandHandler<GoogleLoginCommand, AuthResponseDto>
+public class GoogleLoginCommandHandler(IAuthService authService, IMemoryCache memoryCache) : ICommandHandler<GoogleLoginCommand, LoginWithAccountSelectionResponseDto>
 {
-    public async Task<AuthResponseDto> Handle(GoogleLoginCommand request, CancellationToken cancellationToken)
+    public async Task<LoginWithAccountSelectionResponseDto> Handle(GoogleLoginCommand request, CancellationToken cancellationToken)
     {
         // Validate CSRF state parameter
         if (string.IsNullOrEmpty(request.State))

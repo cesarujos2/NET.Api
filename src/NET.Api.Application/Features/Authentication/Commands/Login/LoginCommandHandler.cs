@@ -4,7 +4,7 @@ using NET.Api.Application.Common.Models.Authentication;
 
 namespace NET.Api.Application.Features.Authentication.Commands.Login;
 
-public class LoginCommandHandler : ICommandHandler<LoginCommand, AuthResponseDto>
+public class LoginCommandHandler : ICommandHandler<LoginCommand, LoginWithAccountSelectionResponseDto>
 {
     private readonly IAuthService _authService;
 
@@ -13,7 +13,7 @@ public class LoginCommandHandler : ICommandHandler<LoginCommand, AuthResponseDto
         _authService = authService;
     }
 
-    public async Task<AuthResponseDto> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<LoginWithAccountSelectionResponseDto> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var loginRequest = new LoginRequestDto
         {

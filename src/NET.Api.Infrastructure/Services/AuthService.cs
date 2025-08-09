@@ -2,8 +2,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using NET.Api.Application.Abstractions.Services;
 using NET.Api.Application.Common.Models.Authentication;
+using NET.Api.Application.Common.Models.UserAccount;
 using NET.Api.Domain.Entities;
 using NET.Api.Shared.Constants;
+using AutoMapper;
+using System.Security.Cryptography;
 
 namespace NET.Api.Infrastructure.Services;
 
@@ -13,6 +16,8 @@ public class AuthService(
     IJwtTokenService jwtTokenService,
     IEmailService emailService,
     IGoogleAuthService googleAuthService,
+    IUserAccountService userAccountService,
+    IMapper mapper,
     ILogger<AuthService> logger) : IAuthService
 {
     public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request, string baseUrl)
@@ -50,6 +55,18 @@ public class AuthService(
             throw new InvalidOperationException($"Error al asignar el rol por defecto: {roleErrors}");
         }
 
+        // Create default user account
+        try
+        {
+            await userAccountService.CreateDefaultAccountAsync(user.Id, "Principal");
+            logger.LogInformation("Default account created for user {UserId}", user.Id);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to create default account for user {UserId}", user.Id);
+            // Don't throw here, user registration was successful
+        }
+
         // Generate email confirmation token
         var emailConfirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
 
@@ -77,7 +94,7 @@ public class AuthService(
         };
     }
 
-    public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
+    public async Task<LoginWithAccountSelectionResponseDto> LoginAsync(LoginRequestDto request)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user == null)
@@ -101,25 +118,88 @@ public class AuthService(
             throw new UnauthorizedAccessException("Credenciales inválidas.");
         }
 
-        // Get user roles
-        var roles = await userManager.GetRolesAsync(user);
-
-        // Generate JWT tokens
-        var accessToken = await jwtTokenService.GenerateAccessTokenAsync(user.Id, user.Email!, roles.ToList());
-        var refreshToken = await jwtTokenService.GenerateRefreshTokenAsync(user.Id);
-
-        return new AuthResponseDto
+        // Get user accounts
+        var userAccounts = await userAccountService.GetAccountsForSelectionAsync(user.Id);
+        
+        // If user has no accounts, create a default one
+        if (!userAccounts.Any())
         {
-            Id = user.Id,
-            Email = user.Email!,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            FullName = user.FullName,
-            AccessToken = accessToken,
-            RefreshToken = refreshToken,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(15), // From configuration
-            Roles = [.. roles]
+            try
+            {
+                await userAccountService.CreateDefaultAccountAsync(user.Id, "Principal");
+                userAccounts = await userAccountService.GetAccountsForSelectionAsync(user.Id);
+                logger.LogInformation("Default account created for existing user {UserId}", user.Id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to create default account for existing user {UserId}", user.Id);
+                throw new InvalidOperationException("Error al configurar la cuenta del usuario.");
+            }
+        }
+
+        // If user has only one account, log them in directly
+        if (userAccounts.Count == 1)
+        {
+            var singleAccount = userAccounts.First();
+            await userAccountService.UpdateLastAccessedAsync(singleAccount.Id);
+            
+            var authResponse = await GenerateAuthResponseAsync(user, singleAccount.Id);
+            
+            return new LoginWithAccountSelectionResponseDto
+            {
+                RequiresAccountSelection = false,
+                AuthResponse = authResponse,
+                SelectedAccount = mapper.Map<UserAccountDto>(singleAccount)
+            };
+        }
+
+        // User has multiple accounts, require selection
+        var selectionToken = GenerateSelectionToken(user.Id);
+        
+        return new LoginWithAccountSelectionResponseDto
+        {
+            RequiresAccountSelection = true,
+            AvailableAccounts = userAccounts,
+            SelectionToken = selectionToken
         };
+    }
+
+    public async Task<AuthResponseDto> SelectAccountAsync(SelectAccountRequestDto request)
+    {
+        try
+        {
+            // Validate selection token
+            var userId = ValidateSelectionToken(request.SelectionToken);
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("Token de selección inválido o expirado.");
+            }
+
+            // Verify user exists
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException("Usuario no encontrado.");
+            }
+
+            // Verify account belongs to user
+            var userAccount = await userAccountService.GetUserAccountByIdAsync(request.AccountId);
+            if (userAccount == null || userAccount.ApplicationUserId != userId)
+            {
+                throw new UnauthorizedAccessException("Cuenta no válida.");
+            }
+
+            // Update last accessed
+            await userAccountService.UpdateLastAccessedAsync(request.AccountId);
+
+            // Generate auth response
+            return await GenerateAuthResponseAsync(user, request.AccountId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error selecting account {AccountId}", request.AccountId);
+            throw;
+        }
     }
 
     public async Task<AuthResponseDto> RefreshTokenAsync(string accessToken, string refreshToken)
@@ -373,9 +453,120 @@ public class AuthService(
         }
     }
 
-    public async Task<AuthResponseDto> GoogleLoginAsync(GoogleAuthRequestDto request)
+    public async Task<LoginWithAccountSelectionResponseDto> GoogleLoginAsync(GoogleAuthRequestDto request)
     {
         var idToken = await googleAuthService.ExchangeCodeForIdTokenAsync(request.Code, request.RedirectUri);
-        return await googleAuthService.AuthenticateWithGoogleAsync(idToken);
+        var authResponse = await googleAuthService.AuthenticateWithGoogleAsync(idToken);
+        
+        // Get user accounts after Google authentication
+        var userAccounts = await userAccountService.GetAccountsForSelectionAsync(authResponse.Id);
+        
+        // If user has no accounts, create a default one
+        if (!userAccounts.Any())
+        {
+            try
+            {
+                await userAccountService.CreateDefaultAccountAsync(authResponse.Id, "Principal");
+                userAccounts = await userAccountService.GetAccountsForSelectionAsync(authResponse.Id);
+                logger.LogInformation("Default account created for Google user {UserId}", authResponse.Id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to create default account for Google user {UserId}", authResponse.Id);
+                throw new InvalidOperationException("Error al configurar la cuenta del usuario.");
+            }
+        }
+
+        // If user has only one account, return direct login
+        if (userAccounts.Count == 1)
+        {
+            var singleAccount = userAccounts.First();
+            await userAccountService.UpdateLastAccessedAsync(singleAccount.Id);
+            
+            // Update auth response with account info
+            var userAccountDto = await userAccountService.GetUserAccountByIdAsync(singleAccount.Id);
+            authResponse.SelectedAccount = userAccountDto;
+            authResponse.HasMultipleAccounts = false;
+            
+            return new LoginWithAccountSelectionResponseDto
+            {
+                RequiresAccountSelection = false,
+                AuthResponse = authResponse,
+                SelectedAccount = userAccountDto
+            };
+        }
+
+        // User has multiple accounts, require selection
+        var selectionToken = GenerateSelectionToken(authResponse.Id);
+        
+        return new LoginWithAccountSelectionResponseDto
+        {
+            RequiresAccountSelection = true,
+            AvailableAccounts = userAccounts,
+            SelectionToken = selectionToken
+        };
+    }
+
+    private async Task<AuthResponseDto> GenerateAuthResponseAsync(ApplicationUser user, string accountId)
+    {
+        // Get user roles
+        var roles = await userManager.GetRolesAsync(user);
+
+        // Generate JWT tokens
+        var accessToken = await jwtTokenService.GenerateAccessTokenAsync(user.Id, user.Email!, roles.ToList());
+        var refreshToken = await jwtTokenService.GenerateRefreshTokenAsync(user.Id);
+
+        // Get selected account info
+        var selectedAccount = await userAccountService.GetUserAccountByIdAsync(accountId);
+        var userAccounts = await userAccountService.GetAccountsForSelectionAsync(user.Id);
+
+        return new AuthResponseDto
+        {
+            Id = user.Id,
+            Email = user.Email!,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            FullName = user.FullName,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15), // From configuration
+            Roles = [.. roles],
+            SelectedAccount = selectedAccount,
+            HasMultipleAccounts = userAccounts.Count > 1
+        };
+    }
+
+    private string GenerateSelectionToken(string userId)
+    {
+        // Create a simple token with user ID and expiration (5 minutes)
+        var tokenData = $"{userId}:{DateTime.UtcNow.AddMinutes(5):O}";
+        var tokenBytes = System.Text.Encoding.UTF8.GetBytes(tokenData);
+        return Convert.ToBase64String(tokenBytes);
+    }
+
+    private string? ValidateSelectionToken(string token)
+    {
+        try
+        {
+            var tokenBytes = Convert.FromBase64String(token);
+            var tokenData = System.Text.Encoding.UTF8.GetString(tokenBytes);
+            var parts = tokenData.Split(':');
+            
+            if (parts.Length != 2)
+                return null;
+
+            var userId = parts[0];
+            if (!DateTime.TryParse(parts[1], out var expiration))
+                return null;
+
+            if (DateTime.UtcNow > expiration)
+                return null;
+
+            return userId;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
