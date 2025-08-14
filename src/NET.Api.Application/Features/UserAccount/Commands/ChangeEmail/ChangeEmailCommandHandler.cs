@@ -3,12 +3,12 @@ using Microsoft.Extensions.Logging;
 using NET.Api.Application.Abstractions.Messaging;
 using NET.Api.Application.Abstractions.Services;
 using NET.Api.Application.Common.Exceptions;
-using NET.Api.Application.Common.Models.UserAccount;
+using NET.Api.Application.Common.Models.User;
 using NET.Api.Domain.Entities;
 
 namespace NET.Api.Application.Features.UserAccount.Commands.ChangeEmail;
 
-public class ChangeEmailCommandHandler : ICommandHandler<ChangeEmailCommand, UserAccountResponseDto>
+public class ChangeEmailCommandHandler : ICommandHandler<ChangeEmailCommand, UserOperationResponseDto>
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IEmailService _emailService;
@@ -24,7 +24,7 @@ public class ChangeEmailCommandHandler : ICommandHandler<ChangeEmailCommand, Use
         _logger = logger;
     }
 
-    public async Task<UserAccountResponseDto> Handle(ChangeEmailCommand request, CancellationToken cancellationToken)
+    public async Task<UserOperationResponseDto> Handle(ChangeEmailCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -66,7 +66,7 @@ public class ChangeEmailCommandHandler : ICommandHandler<ChangeEmailCommand, Use
 
             _logger.LogInformation("Email change confirmation sent for user {UserId}", request.UserId);
 
-            return new UserAccountResponseDto
+            return new UserOperationResponseDto
             {
                 Success = true,
                 Message = "Se ha enviado un email de confirmación a la nueva dirección. Por favor, confirma el cambio desde tu email.",

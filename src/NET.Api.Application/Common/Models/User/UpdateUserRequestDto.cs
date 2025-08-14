@@ -1,11 +1,7 @@
-using NET.Api.Application.Abstractions.Messaging;
-using NET.Api.Application.Common.Models.User;
+namespace NET.Api.Application.Common.Models.User;
 
-namespace NET.Api.Application.Features.UserAccount.Commands.UpdateProfile;
-
-public class UpdateProfileCommand : ICommand<UserDto>
+public class UpdateUserRequestDto
 {
-    public string UserId { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;

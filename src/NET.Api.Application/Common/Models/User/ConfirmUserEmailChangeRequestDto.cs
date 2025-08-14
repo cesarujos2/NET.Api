@@ -1,6 +1,6 @@
-namespace NET.Api.Application.Common.Models.UserAccount;
+namespace NET.Api.Application.Common.Models.User;
 
-public class ConfirmEmailChangeRequestDto
+public class ConfirmUserEmailChangeRequestDto
 {
     public string UserId { get; set; } = string.Empty;
     public string NewEmail { get; set; } = string.Empty;

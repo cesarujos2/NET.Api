@@ -155,11 +155,11 @@ public class ExceptionHandlingMiddleware(
                 suggestions: new List<string> { "Contacta al administrador para obtener los permisos necesarios." }
             ),
 
-            UnauthorizedAccessException => ErrorResponse.Create(
+            UnauthorizedAccessException unauthorizedEx => ErrorResponse.Create(
                 errorCode: "UNAUTHORIZED_ACCESS",
-                message: "Acceso no autorizado. Debes autenticarte para acceder a este recurso.",
+                message: unauthorizedEx.Message,
                 traceId: traceId,
-                suggestions: new List<string> { "Inicia sesión con credenciales válidas." }
+                suggestions: new List<string> { "Verifica tus credenciales y permisos de acceso." }
             ),
 
             ExternalServiceException externalEx => ErrorResponse.Create(

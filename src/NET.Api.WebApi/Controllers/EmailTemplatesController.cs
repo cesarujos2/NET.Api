@@ -5,6 +5,7 @@ using NET.Api.Application.Common.Models.EmailTemplate;
 using NET.Api.Application.Features.EmailTemplates.Commands.UpdateEmailTemplate;
 using NET.Api.Application.Features.EmailTemplates.Queries.GetEmailTemplate;
 using NET.Api.Application.Features.EmailTemplates.Queries.GetEmailTemplates;
+using NET.Api.WebApi.Controllers;
 using static NET.Api.Shared.Constants.ApiConstants;
 
 namespace NET.Api.Controllers;
@@ -12,7 +13,7 @@ namespace NET.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = Policies.RequireAdminOrAbove)]
-public class EmailTemplatesController(IMediator mediator) : ControllerBase
+public class EmailTemplatesController(IMediator mediator) : BaseApiController
 {
     /// <summary>
     /// Get all email templates
@@ -21,16 +22,9 @@ public class EmailTemplatesController(IMediator mediator) : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<EmailTemplateDto>>> GetEmailTemplates()
     {
-        try
-        {
-            var query = new GetEmailTemplatesQuery();
-            var result = await mediator.Send(query);
-            return Ok(new { success = true, message = "Templates obtenidos exitosamente.", data = result });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
-        }
+        var query = new GetEmailTemplatesQuery();
+        var result = await mediator.Send(query);
+        return Ok(new { success = true, message = "Templates obtenidos exitosamente.", data = result });
     }
 
     /// <summary>
@@ -41,20 +35,9 @@ public class EmailTemplatesController(IMediator mediator) : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<EmailTemplateDto>> GetEmailTemplate(Guid id)
     {
-        try
-        {
-            var query = new GetEmailTemplateQuery { Id = id };
-            var result = await mediator.Send(query);
-            return Ok(new { success = true, message = "Template obtenido exitosamente.", data = result });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(new { success = false, message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
-        }
+        var query = new GetEmailTemplateQuery { Id = id };
+        var result = await mediator.Send(query);
+        return Ok(new { success = true, message = "Template obtenido exitosamente.", data = result });
     }
 
     /// <summary>
@@ -66,27 +49,16 @@ public class EmailTemplatesController(IMediator mediator) : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<EmailTemplateDto>> UpdateEmailTemplate(Guid id, [FromBody] UpdateEmailTemplateDto request)
     {
-        try
+        var command = new UpdateEmailTemplateCommand
         {
-            var command = new UpdateEmailTemplateCommand
-            {
-                Id = id,
-                Subject = request.Subject,
-                HtmlContent = request.HtmlContent,
-                TextContent = request.TextContent,
-                Description = request.Description
-            };
+            Id = id,
+            Subject = request.Subject,
+            HtmlContent = request.HtmlContent,
+            TextContent = request.TextContent,
+            Description = request.Description
+        };
 
-            var result = await mediator.Send(command);
-            return Ok(new { success = true, message = "Template actualizado exitosamente.", data = result });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(new { success = false, message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
-        }
+        var result = await mediator.Send(command);
+        return Ok(new { success = true, message = "Template actualizado exitosamente.", data = result });
     }
 }

@@ -1,11 +1,11 @@
 using FluentValidation;
-using NET.Api.Application.Common.Models.UserAccount;
+using NET.Api.Application.Common.Models.User;
 
 namespace NET.Api.Application.Common.Validators.UserAccount;
 
-public class ConfirmEmailChangeRequestDtoValidator : AbstractValidator<ConfirmEmailChangeRequestDto>
+public class ConfirmUserEmailChangeRequestDtoValidator : AbstractValidator<ConfirmUserEmailChangeRequestDto>
 {
-    public ConfirmEmailChangeRequestDtoValidator()
+    public ConfirmUserEmailChangeRequestDtoValidator()
     {
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("El ID de usuario es requerido.");

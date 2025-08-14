@@ -1,12 +1,12 @@
 using FluentValidation;
-using NET.Api.Application.Common.Models.UserAccount;
+using NET.Api.Application.Common.Models.User;
 using NET.Api.Shared.Utilities;
 
 namespace NET.Api.Application.Common.Validators.UserAccount;
 
-public class ChangeEmailRequestDtoValidator : AbstractValidator<ChangeEmailRequestDto>
+public class ChangeUserEmailRequestDtoValidator : AbstractValidator<ChangeUserEmailRequestDto>
 {
-    public ChangeEmailRequestDtoValidator()
+    public ChangeUserEmailRequestDtoValidator()
     {
         RuleFor(x => x.NewEmail)
             .NotEmpty().WithMessage("El nuevo email es requerido.")

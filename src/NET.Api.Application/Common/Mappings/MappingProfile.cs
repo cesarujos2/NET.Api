@@ -1,6 +1,6 @@
 using AutoMapper;
 using NET.Api.Domain.Entities;
-using NET.Api.Application.Common.Models.Authentication;
+using NET.Api.Application.Common.Models.User;
 using NET.Api.Application.Common.Models.EmailTemplate;
 
 namespace NET.Api.Application.Common.Mappings;
@@ -10,7 +10,7 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         // Auth mappings
-        CreateMap<ApplicationUser, UserProfileDto>()
+        CreateMap<ApplicationUser, UserDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
             .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))

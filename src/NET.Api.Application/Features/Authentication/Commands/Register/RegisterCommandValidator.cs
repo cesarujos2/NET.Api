@@ -30,11 +30,6 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
             .NotEmpty().WithMessage("El apellido es requerido.")
             .MaximumLength(100).WithMessage("El apellido no puede exceder 100 caracteres.");
 
-        RuleFor(x => x.IdentityDocument)
-            .NotEmpty().WithMessage("El documento de identidad es requerido.")
-            .MaximumLength(20).WithMessage("El documento de identidad no puede exceder 20 caracteres.")
-            .Matches(@"^[a-zA-Z0-9]+$").WithMessage("El documento de identidad solo puede contener letras y números.");
-
         RuleFor(x => x.PhoneNumber)
             .MaximumLength(15).WithMessage("El número de teléfono no puede exceder 15 caracteres.")
             .When(x => !string.IsNullOrEmpty(x.PhoneNumber));

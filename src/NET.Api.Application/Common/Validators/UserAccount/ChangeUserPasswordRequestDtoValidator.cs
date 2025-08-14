@@ -1,11 +1,11 @@
 using FluentValidation;
-using NET.Api.Application.Common.Models.UserAccount;
+using NET.Api.Application.Common.Models.User;
 
 namespace NET.Api.Application.Common.Validators.UserAccount;
 
-public class ChangePasswordRequestDtoValidator : AbstractValidator<ChangePasswordRequestDto>
+public class ChangeUserPasswordRequestDtoValidator : AbstractValidator<ChangeUserPasswordRequestDto>
 {
-    public ChangePasswordRequestDtoValidator()
+    public ChangeUserPasswordRequestDtoValidator()
     {
         RuleFor(x => x.CurrentPassword)
             .NotEmpty().WithMessage("La contraseña actual es requerida.");

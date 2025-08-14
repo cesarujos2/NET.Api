@@ -1,6 +1,6 @@
-namespace NET.Api.Application.Common.Models.UserAccount;
+namespace NET.Api.Application.Common.Models.User;
 
-public class ChangePasswordRequestDto
+public class ChangeUserPasswordRequestDto
 {
     public string CurrentPassword { get; set; } = string.Empty;
     public string NewPassword { get; set; } = string.Empty;

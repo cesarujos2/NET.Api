@@ -3,16 +3,16 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using AutoMapper;
 using NET.Api.Application.Abstractions.Messaging;
-using NET.Api.Application.Common.Models.Authentication;
+using NET.Api.Application.Common.Models.User;
 
 namespace NET.Api.Application.Features.UserAccount.Queries.GetProfile;
 
 public class GetUserProfileQueryHandler(
     UserManager<ApplicationUser> userManager,
     IMapper mapper,
-    ILogger<GetUserProfileQueryHandler> logger) : IQueryHandler<GetUserProfileQuery, UserProfileDto>
+    ILogger<GetUserProfileQueryHandler> logger) : IQueryHandler<GetUserProfileQuery, UserDto>
 {
-    public async Task<UserProfileDto> Handle(GetUserProfileQuery request, CancellationToken cancellationToken)
+    public async Task<UserDto> Handle(GetUserProfileQuery request, CancellationToken cancellationToken)
     {
         try
         {
@@ -26,7 +26,7 @@ public class GetUserProfileQueryHandler(
 
             var userRoles = await userManager.GetRolesAsync(user);
             
-            var userProfile = mapper.Map<UserProfileDto>(user);
+            var userProfile = mapper.Map<UserDto>(user);
             userProfile.Roles = [.. userRoles];
             
             logger.LogInformation("User profile retrieved successfully for user {UserId}", request.UserId);

@@ -1,14 +1,14 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
-using NET.Api.Application.Common.Models.Authentication;
-using NET.Api.Application.Common.Models.UserAccount;
+using NET.Api.Application.Common.Models.User;
 using NET.Api.Application.Features.UserAccount.Commands.ChangeEmail;
 using NET.Api.Application.Features.UserAccount.Commands.ChangePassword;
 using NET.Api.Application.Features.UserAccount.Commands.ConfirmEmailChange;
 using NET.Api.Application.Features.UserAccount.Commands.UpdateProfile;
 using NET.Api.Application.Features.UserAccount.Queries.GetProfile;
+using NET.Api.Application.Features.UserAccount.Queries.GetProfileStatus;
+using NET.Api.WebApi.Controllers;
 using System.Security.Claims;
 
 namespace NET.Api.Controllers;
@@ -16,7 +16,7 @@ namespace NET.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UserAccountController(IMediator mediator, ILogger<UserAccountController> logger) : ControllerBase
+public class UserAccountController(IMediator mediator) : BaseApiController
 {
 
     /// <summary>
@@ -24,33 +24,22 @@ public class UserAccountController(IMediator mediator, ILogger<UserAccountContro
     /// </summary>
     /// <returns>Current user information</returns>
     [HttpGet("profile")]
-    public async Task<ActionResult<UserProfileDto>> GetProfile()
+    public async Task<ActionResult<UserDto>> GetProfile()
     {
-        try
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(new { success = false, message = "Usuario no autenticado." });
-            }
-
-            var query = new GetUserProfileQuery
-            {
-                UserId = userId
-            };
-
-            var result = await mediator.Send(query);
-            return Ok(new { success = true, message = "Perfil obtenido exitosamente.", data = result });
-        }
-        catch (InvalidOperationException ex)
+        if (string.IsNullOrEmpty(userId))
         {
-            return NotFound(new { success = false, message = ex.Message });
+            return Unauthorized(new { success = false, message = "Usuario no autenticado." });
         }
-        catch (Exception ex)
+
+        var query = new GetUserProfileQuery
         {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
-        }
+            UserId = userId
+        };
+
+        var result = await mediator.Send(query);
+        return Ok(new { success = true, message = "Perfil obtenido exitosamente.", data = result });
     }
 
     /// <summary>
@@ -59,32 +48,26 @@ public class UserAccountController(IMediator mediator, ILogger<UserAccountContro
     /// <param name="request">Datos del perfil a actualizar</param>
     /// <returns>Perfil actualizado</returns>
     [HttpPut("profile")]
-    public async Task<ActionResult<UserProfileDto>> UpdateProfile([FromBody] UpdateUserProfileRequestDto request)
+    public async Task<ActionResult<UserDto>> UpdateProfile([FromBody] UpdateUserRequestDto request)
     {
-        try
+        if (string.IsNullOrEmpty(CurrentUserId))
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(new { success = false, message = "Usuario no autenticado." });
-            }
-
-            var command = new UpdateProfileCommand
-            {
-                UserId = userId,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                PhoneNumber = request.PhoneNumber
-            };
-
-            var result = await mediator.Send(command);
-            return Ok(new { success = true, message = "Perfil actualizado exitosamente.", data = result });
+            return Unauthorized(new { success = false, message = "Usuario no autenticado." });
         }
-        catch (Exception ex)
+
+        var command = new UpdateProfileCommand
         {
-            logger.LogError(ex, "Error updating user profile");
-            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
-        }
+            UserId = CurrentUserId,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            PhoneNumber = request.PhoneNumber,
+            IdentityDocument = request.IdentityDocument,
+            DateOfBirth = request.DateOfBirth,
+            Address = request.Address
+        };
+
+        var result = await mediator.Send(command);
+        return Ok(new { success = true, message = "Perfil actualizado exitosamente.", data = result });
     }
 
     /// <summary>
@@ -93,40 +76,24 @@ public class UserAccountController(IMediator mediator, ILogger<UserAccountContro
     /// <param name="request">Datos para cambio de email</param>
     /// <returns>Resultado del cambio de email</returns>
     [HttpPost("change-email")]
-    public async Task<ActionResult<UserAccountResponseDto>> ChangeEmail([FromBody] ChangeEmailRequestDto request)
+    public async Task<ActionResult<UserOperationResponseDto>> ChangeEmail([FromBody] ChangeUserEmailRequestDto request)
     {
-        try
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(new { success = false, message = "Usuario no autenticado." });
-            }
+            return Unauthorized(new { success = false, message = "Usuario no autenticado." });
+        }
 
-            var command = new ChangeEmailCommand
-            {
-                UserId = userId,
-                NewEmail = request.NewEmail,
-                CurrentPassword = request.CurrentPassword,
-                BaseUrl = request.BaseUrl
-            };
+        var command = new ChangeEmailCommand
+        {
+            UserId = userId,
+            NewEmail = request.NewEmail,
+            CurrentPassword = request.CurrentPassword,
+            BaseUrl = request.BaseUrl
+        };
 
-            var result = await mediator.Send(command);
-            return Ok(new { success = result.Success, message = result.Message, data = result });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(new { success = false, message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { success = false, message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error changing user email");
-            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
-        }
+        var result = await mediator.Send(command);
+        return Ok(new { success = result.Success, message = result.Message, data = result });
     }
 
     /// <summary>
@@ -136,29 +103,17 @@ public class UserAccountController(IMediator mediator, ILogger<UserAccountContro
     /// <returns>Resultado de la confirmación</returns>
     [HttpPost("confirm-email-change")]
     [AllowAnonymous]
-    public async Task<ActionResult<UserAccountResponseDto>> ConfirmEmailChange([FromBody] ConfirmEmailChangeRequestDto request)
+    public async Task<ActionResult<UserOperationResponseDto>> ConfirmEmailChange([FromBody] ConfirmUserEmailChangeRequestDto request)
     {
-        try
+        var command = new ConfirmEmailChangeCommand
         {
-            var command = new ConfirmEmailChangeCommand
-            {
-                UserId = request.UserId,
-                NewEmail = request.NewEmail,
-                Token = request.Token
-            };
+            UserId = request.UserId,
+            NewEmail = request.NewEmail,
+            Token = request.Token
+        };
 
-            var result = await mediator.Send(command);
-            return Ok(new { success = result.Success, message = result.Message, data = result });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { success = false, message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error confirming email change");
-            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
-        }
+        var result = await mediator.Send(command);
+        return Ok(new { success = result.Success, message = result.Message, data = result });
     }
 
     /// <summary>
@@ -167,39 +122,42 @@ public class UserAccountController(IMediator mediator, ILogger<UserAccountContro
     /// <param name="request">Datos para cambio de contraseña</param>
     /// <returns>Resultado del cambio de contraseña</returns>
     [HttpPost("change-password")]
-    public async Task<ActionResult<UserAccountResponseDto>> ChangePassword([FromBody] ChangePasswordRequestDto request)
+    public async Task<ActionResult<UserOperationResponseDto>> ChangePassword([FromBody] ChangeUserPasswordRequestDto request)
     {
-        try
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(new { success = false, message = "Usuario no autenticado." });
-            }
+            return Unauthorized(new { success = false, message = "Usuario no autenticado." });
+        }
 
-            var command = new ChangePasswordCommand
-            {
-                UserId = userId,
-                CurrentPassword = request.CurrentPassword,
-                NewPassword = request.NewPassword,
-                ConfirmPassword = request.ConfirmPassword
-            };
+        var command = new ChangePasswordCommand
+        {
+            UserId = userId,
+            CurrentPassword = request.CurrentPassword,
+            NewPassword = request.NewPassword,
+            ConfirmPassword = request.ConfirmPassword
+        };
 
-            var result = await mediator.Send(command);
-            return Ok(new { success = result.Success, message = result.Message, data = result });
-        }
-        catch (UnauthorizedAccessException ex)
+        var result = await mediator.Send(command);
+        return Ok(new { success = result.Success, message = result.Message, data = result });
+    }
+
+    /// <summary>
+    /// Obtiene el estado de completitud del perfil del usuario autenticado
+    /// </summary>
+    /// <returns>Estado del perfil del usuario</returns>
+    [HttpGet("profile/status")]
+    public async Task<ActionResult<UserStatusDto>> GetProfileStatus()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
         {
-            return Unauthorized(new { success = false, message = ex.Message });
+            return Unauthorized(new { success = false, message = "Usuario no autenticado." });
         }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { success = false, message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error changing user password");
-            return StatusCode(500, new { success = false, message = "Error interno del servidor.", details = ex.Message });
-        }
+
+        var query = new GetProfileStatusQuery { UserId = userId };
+        var result = await mediator.Send(query);
+
+        return Ok(new { success = true, message = "Estado del perfil obtenido exitosamente.", data = result });
     }
 }

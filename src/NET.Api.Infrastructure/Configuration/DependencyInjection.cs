@@ -98,6 +98,7 @@ public static class DependencyInjection
         services.AddScoped<IRoleHierarchyService, RoleHierarchyService>();
         services.AddScoped<IRoleValidationService, RoleValidationService>();
         services.AddScoped<IRoleAuthorizationService, RoleAuthorizationService>();
+        services.AddScoped<IProfileCompletionService, ProfileCompletionService>();
         
         // Register application services
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();

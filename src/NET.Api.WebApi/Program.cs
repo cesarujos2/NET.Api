@@ -81,6 +81,9 @@ try
 
     app.UseAuthentication();
     app.UseAuthorization();
+    
+    // Middleware de completitud del perfil (debe ir después de autenticación/autorización)
+    app.UseMiddleware<ProfileCompletionMiddleware>();
 
     app.MapControllers();
 

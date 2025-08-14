@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using NET.Api.Application.Abstractions.Messaging;
 using NET.Api.Application.Common.Exceptions;
-using NET.Api.Application.Common.Models.UserAccount;
+using NET.Api.Application.Common.Models.User;
 using NET.Api.Domain.Entities;
 
 namespace NET.Api.Application.Features.UserAccount.Commands.ChangePassword;
 
-public class ChangePasswordCommandHandler : ICommandHandler<ChangePasswordCommand, UserAccountResponseDto>
+public class ChangePasswordCommandHandler : ICommandHandler<ChangePasswordCommand, UserOperationResponseDto>
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<ChangePasswordCommandHandler> _logger;
@@ -20,7 +20,7 @@ public class ChangePasswordCommandHandler : ICommandHandler<ChangePasswordComman
         _logger = logger;
     }
 
-    public async Task<UserAccountResponseDto> Handle(ChangePasswordCommand request, CancellationToken cancellationToken)
+    public async Task<UserOperationResponseDto> Handle(ChangePasswordCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -55,7 +55,7 @@ public class ChangePasswordCommandHandler : ICommandHandler<ChangePasswordComman
 
             _logger.LogInformation("Password changed successfully for user {UserId}", request.UserId);
 
-            return new UserAccountResponseDto
+            return new UserOperationResponseDto
             {
                 Success = true,
                 Message = "La contraseña ha sido cambiada exitosamente.",

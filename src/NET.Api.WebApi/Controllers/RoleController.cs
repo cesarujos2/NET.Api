@@ -17,32 +17,18 @@ namespace NET.Api.WebApi.Controllers;
 [Authorize]
 public class RoleController(
     IRoleManagementService roleManagementService,
-    IRoleQueryService roleQueryService,
-    ILogger<RoleController> logger) : ControllerBase
+    IRoleQueryService roleQueryService) : ControllerBase
 {
     /// <summary>
-    /// Obtiene todos los roles del sistema
+    /// Obtiene todos los roles disponibles
     /// </summary>
     /// <returns>Lista de roles</returns>
     [HttpGet]
-    [Authorize(Policy = ApiConstants.Policies.RequireElevatedRoles)]
+    [Authorize(Policy = ApiConstants.Policies.RequireModeratorOrAbove)]
     public async Task<ActionResult<IEnumerable<ApplicationRole>>> GetAllRoles()
     {
-        try
-        {
-            var roles = await roleQueryService.GetAllRolesAsync();
-            return Ok(new { success = true, data = roles, message = "Roles obtenidos exitosamente" });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            logger.LogWarning(ex, "Acceso no autorizado al obtener roles");
-            return Forbid();
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error al obtener todos los roles");
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
+        var roles = await roleQueryService.GetAllRolesAsync();
+        return Ok(new { success = true, data = roles, message = "Roles obtenidos exitosamente" });
     }
 
     /// <summary>
@@ -54,26 +40,13 @@ public class RoleController(
     [Authorize(Policy = ApiConstants.Policies.RequireElevatedRoles)]
     public async Task<ActionResult<ApplicationRole>> GetRoleById(string roleId)
     {
-        try
+        var role = await roleQueryService.GetRoleByIdAsync(roleId);
+        if (role == null)
         {
-            var role = await roleQueryService.GetRoleByIdAsync(roleId);
-            if (role == null)
-            {
-                return NotFound(new { success = false, message = "Rol no encontrado" });
-            }
+            return NotFound(new { success = false, message = "Rol no encontrado" });
+        }
 
-            return Ok(new { success = true, data = role, message = "Rol obtenido exitosamente" });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            logger.LogWarning(ex, "Acceso no autorizado al obtener rol por ID: {RoleId}", roleId);
-            return Forbid();
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error al obtener rol por ID: {RoleId}", roleId);
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
+        return Ok(new { success = true, data = role, message = "Rol obtenido exitosamente" });
     }
 
     /// <summary>
@@ -85,42 +58,19 @@ public class RoleController(
     [Authorize(Policy = ApiConstants.Policies.RequireAdminOrAbove)]
     public async Task<ActionResult<ApplicationRole>> CreateRole([FromBody] CreateRoleRequest request)
     {
-        try
+        var userRoles = GetUserRoles();
+        
+        var role = new ApplicationRole
         {
-            var userRoles = GetUserRoles();
-            
-            var role = new ApplicationRole
-            {
-                Name = request.Name,
-                Description = request.Description,
-                HierarchyLevel = request.HierarchyLevel,
-                IsSystemRole = false
-            };
+            Name = request.Name,
+            Description = request.Description,
+            HierarchyLevel = request.HierarchyLevel,
+            IsSystemRole = false
+        };
 
-            var createdRole = await roleManagementService.CreateRoleAsync(role, userRoles);
-            return CreatedAtAction(nameof(GetRoleById), new { roleId = createdRole.Id }, 
-                new { success = true, data = createdRole, message = "Rol creado exitosamente" });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            logger.LogWarning(ex, "Unauthorized access creating role: {RoleName}", request.Name);
-            return Forbid();
-        }
-        catch (BusinessRuleException ex)
-        {
-            logger.LogWarning(ex, "Business rule violation creating role: {RoleName}", request.Name);
-            return BadRequest(new { success = false, message = ex.Message, errorCode = ex.RuleName });
-        }
-        catch (ValidationException ex)
-        {
-            logger.LogWarning(ex, "Validation error creating role: {RoleName}", request.Name);
-            return BadRequest(new { success = false, message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error creating role: {RoleName}", request.Name);
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
+        var createdRole = await roleManagementService.CreateRoleAsync(role, userRoles);
+        return CreatedAtAction(nameof(GetRoleById), new { roleId = createdRole.Id }, 
+            new { success = true, data = createdRole, message = "Rol creado exitosamente" });
     }
 
     /// <summary>
@@ -133,45 +83,17 @@ public class RoleController(
     [Authorize(Policy = ApiConstants.Policies.RequireAdminOrAbove)]
     public async Task<ActionResult<ApplicationRole>> UpdateRole(string roleId, [FromBody] UpdateRoleRequest request)
     {
-        try
+        var userRoles = GetUserRoles();
+        
+        var role = new ApplicationRole
         {
-            var userRoles = GetUserRoles();
-            
-            var role = new ApplicationRole
-            {
-                Id = roleId,
-                Description = request.Description,
-                HierarchyLevel = request.HierarchyLevel
-            };
+            Id = roleId,
+            Description = request.Description,
+            HierarchyLevel = request.HierarchyLevel
+        };
 
-            var updatedRole = await roleManagementService.UpdateRoleAsync(role, userRoles);
-            return Ok(new { success = true, data = updatedRole, message = "Rol actualizado exitosamente" });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            logger.LogWarning(ex, "Unauthorized access updating role: {RoleId}", roleId);
-            return Forbid();
-        }
-        catch (NotFoundException ex)
-        {
-            logger.LogWarning(ex, "Role not found when updating: {RoleId}", roleId);
-            return NotFound(new { success = false, message = ex.Message });
-        }
-        catch (BusinessRuleException ex)
-        {
-            logger.LogWarning(ex, "Business rule violation updating role: {RoleId}", roleId);
-            return BadRequest(new { success = false, message = ex.Message, errorCode = ex.RuleName });
-        }
-        catch (ValidationException ex)
-        {
-            logger.LogWarning(ex, "Validation error updating role: {RoleId}", roleId);
-            return BadRequest(new { success = false, message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error updating role: {RoleId}", roleId);
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
+        var updatedRole = await roleManagementService.UpdateRoleAsync(role, userRoles);
+        return Ok(new { success = true, data = updatedRole, message = "Rol actualizado exitosamente" });
     }
 
     /// <summary>
@@ -183,37 +105,9 @@ public class RoleController(
     [Authorize(Policy = ApiConstants.Policies.RequireAdminOrAbove)]
     public async Task<ActionResult> DeleteRole(string roleId)
     {
-        try
-        {
-            var userRoles = GetUserRoles();
-            await roleManagementService.DeleteRoleAsync(roleId, userRoles);
-            return Ok(new { success = true, message = "Rol eliminado exitosamente" });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            logger.LogWarning(ex, "Unauthorized access deleting role: {RoleId}", roleId);
-            return Forbid();
-        }
-        catch (NotFoundException ex)
-        {
-            logger.LogWarning(ex, "Role not found when deleting: {RoleId}", roleId);
-            return NotFound(new { success = false, message = ex.Message });
-        }
-        catch (BusinessRuleException ex)
-        {
-            logger.LogWarning(ex, "Business rule violation deleting role: {RoleId}", roleId);
-            return BadRequest(new { success = false, message = ex.Message, errorCode = ex.RuleName });
-        }
-        catch (ValidationException ex)
-        {
-            logger.LogWarning(ex, "Validation error deleting role: {RoleId}", roleId);
-            return BadRequest(new { success = false, message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error deleting role: {RoleId}", roleId);
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
+        var userRoles = GetUserRoles();
+        await roleManagementService.DeleteRoleAsync(roleId, userRoles);
+        return Ok(new { success = true, message = "Rol eliminado exitosamente" });
     }
 
     /// <summary>
@@ -225,36 +119,9 @@ public class RoleController(
     [Authorize(Policy = ApiConstants.Policies.RequireModeratorOrAbove)]
     public async Task<ActionResult> AssignRoleToUser([FromBody] AssignRoleRequest request)
     {
-        try
-        {
-            var userRoles = GetUserRoles();
-            await roleManagementService.AssignRoleToUserAsync(request.UserId, request.RoleName, userRoles);
-            return Ok(new { success = true, message = "Rol asignado exitosamente" });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            logger.LogWarning(ex, "Unauthorized access assigning role {RoleName} to user {UserId}", 
-                request.RoleName, request.UserId);
-            return Forbid();
-        }
-        catch (NotFoundException ex)
-        {
-            logger.LogWarning(ex, "User or role not found when assigning role {RoleName} to user {UserId}", 
-                request.RoleName, request.UserId);
-            return NotFound(new { success = false, message = ex.Message });
-        }
-        catch (BusinessRuleException ex)
-        {
-            logger.LogWarning(ex, "Business rule violation assigning role {RoleName} to user {UserId}", 
-                request.RoleName, request.UserId);
-            return BadRequest(new { success = false, message = ex.Message, errorCode = ex.RuleName });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error assigning role {RoleName} to user {UserId}", 
-                request.RoleName, request.UserId);
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
+        var userRoles = GetUserRoles();
+        await roleManagementService.AssignRoleToUserAsync(request.UserId, request.RoleName, userRoles);
+        return Ok(new { success = true, message = "Rol asignado exitosamente" });
     }
 
     /// <summary>
@@ -266,36 +133,9 @@ public class RoleController(
     [Authorize(Policy = ApiConstants.Policies.RequireModeratorOrAbove)]
     public async Task<ActionResult> RemoveRoleFromUser([FromBody] RemoveRoleRequest request)
     {
-        try
-        {
-            var userRoles = GetUserRoles();
-            await roleManagementService.RemoveRoleFromUserAsync(request.UserId, request.RoleName, userRoles);
-            return Ok(new { success = true, message = "Rol removido exitosamente" });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            logger.LogWarning(ex, "Unauthorized access removing role {RoleName} from user {UserId}", 
-                request.RoleName, request.UserId);
-            return Forbid();
-        }
-        catch (NotFoundException ex)
-        {
-            logger.LogWarning(ex, "User or role not found when removing role {RoleName} from user {UserId}", 
-                request.RoleName, request.UserId);
-            return NotFound(new { success = false, message = ex.Message });
-        }
-        catch (BusinessRuleException ex)
-        {
-            logger.LogWarning(ex, "Business rule violation removing role {RoleName} from user {UserId}", 
-                request.RoleName, request.UserId);
-            return BadRequest(new { success = false, message = ex.Message, errorCode = ex.RuleName });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error removing role {RoleName} from user {UserId}", 
-                request.RoleName, request.UserId);
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
+        var userRoles = GetUserRoles();
+        await roleManagementService.RemoveRoleFromUserAsync(request.UserId, request.RoleName, userRoles);
+        return Ok(new { success = true, message = "Rol removido exitosamente" });
     }
 
     /// <summary>
@@ -306,17 +146,9 @@ public class RoleController(
     [Authorize(Policy = ApiConstants.Policies.RequireModeratorOrAbove)]
     public async Task<ActionResult<IEnumerable<string>>> GetAssignableRoles()
     {
-        try
-        {
-            var userRoles = GetUserRoles();
-            var assignableRoles = await roleQueryService.GetAssignableRolesAsync(userRoles);
-            return Ok(new { success = true, data = assignableRoles, message = "Roles asignables obtenidos exitosamente" });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error al obtener roles asignables");
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
+        var userRoles = GetUserRoles();
+        var assignableRoles = await roleQueryService.GetAssignableRolesAsync(userRoles);
+        return Ok(new { success = true, data = assignableRoles, message = "Roles asignables obtenidos exitosamente" });
     }
 
     /// <summary>
@@ -328,16 +160,8 @@ public class RoleController(
     [Authorize(Policy = ApiConstants.Policies.RequireModeratorOrAbove)]
     public async Task<ActionResult<IEnumerable<string>>> GetUserRoles(string userId)
     {
-        try
-        {
-            var roles = await roleQueryService.GetUserRolesAsync(userId);
-            return Ok(new { success = true, data = roles, message = "Roles del usuario obtenidos exitosamente" });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error al obtener roles del usuario: {UserId}", userId);
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
+        var roles = await roleQueryService.GetUserRolesAsync(userId);
+        return Ok(new { success = true, data = roles, message = "Roles del usuario obtenidos exitosamente" });
     }
 
     /// <summary>

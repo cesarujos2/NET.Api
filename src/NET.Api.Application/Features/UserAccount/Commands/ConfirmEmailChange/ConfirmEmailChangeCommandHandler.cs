@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using NET.Api.Application.Abstractions.Messaging;
 using NET.Api.Application.Common.Exceptions;
-using NET.Api.Application.Common.Models.UserAccount;
+using NET.Api.Application.Common.Models.User;
 using NET.Api.Domain.Entities;
 
 namespace NET.Api.Application.Features.UserAccount.Commands.ConfirmEmailChange;
 
-public class ConfirmEmailChangeCommandHandler : ICommandHandler<ConfirmEmailChangeCommand, UserAccountResponseDto>
+public class ConfirmEmailChangeCommandHandler : ICommandHandler<ConfirmEmailChangeCommand, UserOperationResponseDto>
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<ConfirmEmailChangeCommandHandler> _logger;
@@ -20,7 +20,7 @@ public class ConfirmEmailChangeCommandHandler : ICommandHandler<ConfirmEmailChan
         _logger = logger;
     }
 
-    public async Task<UserAccountResponseDto> Handle(ConfirmEmailChangeCommand request, CancellationToken cancellationToken)
+    public async Task<UserOperationResponseDto> Handle(ConfirmEmailChangeCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -64,7 +64,7 @@ public class ConfirmEmailChangeCommandHandler : ICommandHandler<ConfirmEmailChan
 
             _logger.LogInformation("Email change confirmed successfully for user {UserId}", request.UserId);
 
-            return new UserAccountResponseDto
+            return new UserOperationResponseDto
             {
                 Success = true,
                 Message = "El email ha sido cambiado exitosamente.",

@@ -22,7 +22,6 @@ public class RegisterCommandHandler : ICommandHandler<RegisterCommand, AuthRespo
             ConfirmPassword = request.ConfirmPassword,
             FirstName = request.FirstName,
             LastName = request.LastName,
-            IdentityDocument = request.IdentityDocument,
             PhoneNumber = request.PhoneNumber
         };
 
